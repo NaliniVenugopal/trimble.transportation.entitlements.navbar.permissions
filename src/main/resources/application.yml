@@ -1,0 +1,123 @@
+spring:
+  application:
+    name: navbar-permissions-service
+    version: @version@
+  profiles:
+    active: prod
+  data:
+    mongodb:
+      dbname: NavbarPermissionsDB
+      database: NavbarPermissionsDB
+
+external:
+  accountServiceUrl: '#{"${IS_CONTAINER:false}".equals("true") ? "http://tcx-accountappservice" : "https://cloud.dev.api.trimblecloud.com/transportation"}'
+  accountServiceEndpoint: /api/core/v2/accounts/
+  authorization: eyJraWQiOiJmYjgyNzZhYi1jMzU5LTQ1MDctYjIxNS00OWZhMzVhMjRkODQiLCJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiI4ZGM1YTI3ZS03MjYxLTQ3NjktODI5My1hYTEwNTkyMzc3MWYiLCJ2ZXIiOiIxLjAiLCJhY2NvdW50X2lkIjoiYjY0MTc0M2MtNDY5Zi00YmUzLWI1MDMtYTZmYTgxMGI0MWVlIiwibmJmIjoxNjU1MTM4ODQ0LCJhenAiOiIzNTQyMzU3ZTI0YzQ1OTcyMTlEODk1RUFBRmU5OGY3IiwiYWNjb3VudF9uYW1lIjoiS3VlYml4IFNoaXBtZW50IEVudHJ5IiwibmFtZSI6IlNoaXBtZW50IEVudHJ5IEZsb3ciLCJpc3MiOiJodHRwczovL2FwaS5kZXYudHJpbWJsZS10cmFuc3BvcnRhdGlvbi5jb20iLCJpZGVudGl0eV90eXBlIjoiYXBwbGljYXRpb24iLCJleHAiOjE2NTUxNDI0NDQsImlhdCI6MTY1NTEzODg0NCwianRpIjoiYjJiY2I1YzctYjRkNS00NDgwLWJmOWEtYzE5OGU4YzIxYjVhIn0.NmqYjUpnhrI9Ccsbi2U0BUchssJzuthJmGzRUqDFjbpSd4s-M3YGVdArXgwThNhcE-LF4DTjOUykNnfjySjrmfTj775dv-pG_ITxy09ySiHI1sylDtfTg9PPafCw5gH6_exeLSi7PR7j9McUuRjpTxo87FbjR6B3vVgHem8v17dKxc2Xtb0grNAesYATGJz59rwDLjVHxxwPA2zMW_ZBRIvMl_KCD6H-k99073cud9tMZo-sT06xofnGwt5LCgW7VWaWJWmry00xiPrJeCri2pZynk3VRBrzR8e4582UP6APLmU2kT2_4oIg7OeIJAKHLUtJ0QiZa5n3PAGClH_f1A
+tmsShellNavValues:
+  
+  brokerNavValues:
+    -  
+     parent: partner_user_management
+     children: 
+       - network_partners
+    -
+     parent: configurations
+     children:
+       - locations_areas
+       - rules
+       - equipment
+       - product_catalog
+    -
+     parent: tendering
+     children:
+       - tendering
+    -
+     parent: utilities
+     children:
+       - audit         
+  
+  
+  shipperNavValues:
+    -
+     parent: partner_user_management
+     children:
+       - network_partners
+       - user_management
+    -
+     parent: contracts_rates
+     children:
+       - contracts
+       - rating_test
+       - uploads_batch_jobs
+       - rate_base_management
+       - accessorial_management
+       - fuel_surcharge
+       - fuel_index_management
+    -        
+     parent: operations
+     children: 
+       - planning
+       - quote_details
+       - order_details
+       - shipment_detail
+    -
+     parent: calendar
+     children:
+    -
+     parent: financials
+     children:
+       - orphan_invoices
+       - all_transactions
+       - matching_rules
+       - audit_tolerance
+    -
+     parent: reporting
+     children:
+    -
+     parent: configurations
+     children:
+       - equipment
+       - handling_units_packages
+       - product_catalog
+       - integration_hub
+       - status-milestones
+       - reference_management
+       - service_level_management
+       - locations_areas
+    -
+     parent: carrier_tms
+     children:
+       - carrier-procurement
+       - carrier-tracking
+  
+  
+  contractNavValues:
+    -
+     parent: contracts_rates
+     children:
+       - contracts
+       - rating_test
+       - uploads_batch_jobs
+       - rate_base_management
+       - accessorial_management
+       - fuel_surcharge
+       - fuel_index_management
+       
+       
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  data:
+    mongodb:
+      uri: mongodb+srv://tcx-dev2:ktV2TuVdFq6wx8d@5nodesnosharding-ty8x3.azure.mongodb.net
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  data:
+    mongodb:
+      uri: ${MONGODB_CONNECTION_STRING}

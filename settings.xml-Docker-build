@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.1.0 http://maven.apache.org/xsd/settings-1.1.0.xsd" xmlns="http://maven.apache.org/SETTINGS/1.1.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <servers>
+        <server>
+            <username>{{SVCACCT_TCX_CI_USERNAME}}</username>
+            <password>{{SVCACCT_TCX_CI_PASSWORD}}</password>
+            <id>tcx-virtual-maven</id>
+        </server>
+    </servers>
+    <mirrors>
+        <mirror>
+            <id>tcx-virtual-maven</id>
+            <name>TCX Virtual Maven</name>
+            <url>https://artifactory.trimble.tools/artifactory/tcx-virtual-maven</url>
+            <mirrorOf>*</mirrorOf>
+        </mirror>
+    </mirrors>
+</settings>

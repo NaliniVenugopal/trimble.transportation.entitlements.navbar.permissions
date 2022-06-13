@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <property resource="application.yml"/>
+    <springProperty scope="context" name="app-name" source="spring.application.name"/>
+    <springProperty scope="context" name="version" source="spring.application.version"/>
+    <springProperty scope="context" name="log.env" source="instance.env"/>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <if condition='"${log.env}".equals("local")'>
+        <then>
+            <property name="APPENDER_NAME" value="CONSOLE"/>
+        </then>
+        <else>
+            <property name="APPENDER_NAME" value="DATADOG"/>
+        </else>
+    </if>
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+    <appender name="DATADOG" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <nestedField>
+                    <fieldName>meta</fieldName>
+                    <providers>
+                        <timestamp>
+                            <fieldName>timestamp</fieldName>
+                            <timeZone>UTC</timeZone>
+                            <pattern>yyyy-MM-dd HH:mm:ss.SSS</pattern>
+                        </timestamp>
+                        <mdc>
+                            <includeMdcKeyName>tracker-id</includeMdcKeyName>
+                        </mdc>
+                        <pattern>
+                            <pattern>
+                                {
+                                "environment": "${log.env}",
+                                "app-name": "${app-name}",
+                                "app-version": "${version}"
+                                }
+                            </pattern>
+                        </pattern>
+                        <logLevel>
+                            <fieldName>log-level</fieldName>
+                        </logLevel>
+                        <loggerName>
+                            <fieldName>log-name</fieldName>
+                            <shortenedLoggerNameLength>36</shortenedLoggerNameLength>
+                        </loggerName>
+                        <!--<callerData>
+                            <classFieldName>log-class</classFieldName>
+                            <methodFieldName>log-method</methodFieldName>
+                            <lineFieldName>log-line</lineFieldName>
+                            <fileFieldName>log-file</fileFieldName>
+                        </callerData>-->
+                        <threadName>
+                            <fieldName>thread</fieldName>
+                        </threadName>
+                    </providers>
+                </nestedField>
+                <arguments>
+                    <includeNonStructuredArguments>false</includeNonStructuredArguments>
+                </arguments>
+                <message>
+                    <fieldName>message</fieldName>
+                </message>
+                <stackTrace>
+                    <fieldName>stack</fieldName>
+                </stackTrace>
+            </providers>
+        </encoder>
+    </appender>
+    <root level="INFO">
+        <appender-ref ref="${APPENDER_NAME}"/>
+    </root>
+</configuration>
