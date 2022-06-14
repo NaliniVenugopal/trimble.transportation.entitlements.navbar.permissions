@@ -9,8 +9,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import trimble.transportation.entitlements.navbar.permissions.config.ApplicationProperties;
 import trimble.transportation.entitlements.navbar.permissions.constants.NavbarPermissionsConstants;
+import trimble.transportation.entitlements.navbar.permissions.dto.NavBarListEntity;
 import trimble.transportation.entitlements.navbar.permissions.dto.NavigationReferenceDTO;
 import trimble.transportation.entitlements.navbar.permissions.interceptor.TenantContext;
+import trimble.transportation.entitlements.navbar.permissions.repositories.NavbarEntityRepository;
 import trimble.transportation.entitlements.navbar.permissions.service.NavbarPermissionsService;
 import trimble.transportation.entitlements.navbar.permissions.utils.HttpService;
 import trimble.transportation.entitlements.navbar.permissions.utils.NavbarPermissionUtils;
@@ -28,6 +30,8 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
 
     private final HttpService httpService;
 
+    private final NavbarEntityRepository navbarEntityRepository;
+
     private final ApplicationProperties applicationProperties;
 
     @Value("${external.accountServiceUrl}")
@@ -38,6 +42,12 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
 
     @Value("${external.authorization}")
     private String authorization;
+
+
+    public NavBarListEntity postNavigationBarValues(NavBarListEntity navBarListEntity) {
+        var response = navbarEntityRepository.save(navBarListEntity);
+        return response;
+    }
 
     @SneakyThrows
     public NavigationReferenceDTO constructNavigationMenu(String jwtToken) {
@@ -60,7 +70,8 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
         headers.put("x-credential-jwt", jwtToken);
         headers.put("Content-Type", "application/json");
         //Comment before commit
-//        headers.put("Authorization", "Bearer " + authorization);
+        headers.put("Authorization", "Bearer " + authorization);
+
         JSONObject accountJson = new JSONObject(httpService.getEntity(url, headers, String.class).getResponseBody());
 
         var accountTypes = accountJson.get("accountTypes");

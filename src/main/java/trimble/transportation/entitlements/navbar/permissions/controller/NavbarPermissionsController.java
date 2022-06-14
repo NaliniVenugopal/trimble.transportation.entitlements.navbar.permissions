@@ -3,11 +3,9 @@ package trimble.transportation.entitlements.navbar.permissions.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import trimble.transportation.entitlements.navbar.permissions.constants.NavbarPermissionsConstants;
+import trimble.transportation.entitlements.navbar.permissions.dto.NavBarListEntity;
 import trimble.transportation.entitlements.navbar.permissions.service.NavbarPermissionsService;
 
 import static org.springframework.http.HttpStatus.CREATED;
@@ -20,6 +18,12 @@ public class NavbarPermissionsController {
 
     private final NavbarPermissionsService navbarPermissionsService;
 
+
+    @PostMapping
+    public ResponseEntity<Object> postNavigationBarValues(@RequestBody NavBarListEntity navBarListEntity) {
+        var response = navbarPermissionsService.postNavigationBarValues(navBarListEntity);
+        return ResponseEntity.status(CREATED).body(response);
+    }
 
     @GetMapping("permissions")
     public ResponseEntity<Object> getNavigationBarValues(

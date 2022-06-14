@@ -3,7 +3,7 @@ spring:
     name: navbar-permissions-service
     version: @version@
   profiles:
-    active: prod
+    active: local
   data:
     mongodb:
       dbname: NavbarPermissionsDB
