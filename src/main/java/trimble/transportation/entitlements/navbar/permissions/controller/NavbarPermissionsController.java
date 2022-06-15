@@ -12,7 +12,7 @@ import static org.springframework.http.HttpStatus.CREATED;
 
 @Slf4j
 @RestController
-@RequestMapping("/core/v1/navbar-permissions")
+@RequestMapping("/entitlements/v1/navbar-permissions")
 @RequiredArgsConstructor
 public class NavbarPermissionsController {
 
