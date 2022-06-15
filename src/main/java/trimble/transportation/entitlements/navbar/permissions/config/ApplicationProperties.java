@@ -3,7 +3,7 @@ package trimble.transportation.entitlements.navbar.permissions.config;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
-import trimble.transportation.entitlements.navbar.permissions.dto.NavBarListDto;
+import trimble.transportation.entitlements.navbar.permissions.dto.Applications;
 
 import java.util.List;
 
@@ -13,8 +13,8 @@ import java.util.List;
 public class ApplicationProperties {
 
 
-    List<NavBarListDto> brokerNavValues;
-    List<NavBarListDto> shipperNavValues;
-    List<NavBarListDto> contractNavValues;
+    List<Applications> brokerNavValues;
+    List<Applications> shipperNavValues;
+    List<Applications> contractNavValues;
 
 }

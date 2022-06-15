@@ -5,7 +5,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class NavBarListDto {
+public class Applications {
     private String parent;
     private List<String> children;
 }

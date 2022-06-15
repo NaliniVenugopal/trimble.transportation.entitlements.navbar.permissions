@@ -12,8 +12,10 @@ public final class NavbarPermissionsConstants {
     public static final String BROKER_TEXT = "Brokerage";
     public static final String SHIPPER_BROKER_TEXT = "Shipperage+Brokerage";
     public static final String SHIPPER_MANAGER = "Shipping Manager";
+    public static final String SHIPPER_MANAGER_ROLE = "SHIPPER_MANAGER";
     public static final String CONTRACT_MANAGER = "Contract Manager";
-    public static final String DEFAULT_PERMISSIONS = "Default";
+    public static final String CONTRACT_MANAGER_ROLE = "CONTRACT_MANAGER";
+    public static final String DEFAULT_PERMISSIONS = "DEFAULT_PERMISSIONS";
 
     public static final String SHIPPER = "SHIPPER";
     public static final String BROKER = "BROKER";
