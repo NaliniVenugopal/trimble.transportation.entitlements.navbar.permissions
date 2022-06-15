@@ -5,9 +5,8 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class NavigationReferenceDTO {
+public class NavBarPermission {
     private String matchingIdentifier;
     private String matcher;
-    private List<NavBarListDto> applicationList;
-
+    private List<Applications> applicationList;
 }

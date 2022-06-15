@@ -1,12 +1,13 @@
 package trimble.transportation.entitlements.navbar.permissions.service;
 
-import trimble.transportation.entitlements.navbar.permissions.dto.NavBarListEntity;
-import trimble.transportation.entitlements.navbar.permissions.dto.NavigationReferenceDTO;
+import trimble.transportation.entitlements.navbar.permissions.dto.NavBarPermission;
 
 
 public interface NavbarPermissionsService {
 
-    NavBarListEntity postNavigationBarValues(NavBarListEntity navBarListEntity);
+    NavBarPermission postNavigationBarValues(NavBarPermission navBarPermission);
 
-    NavigationReferenceDTO constructNavigationMenu(String jwtToken);
+    NavBarPermission constructNavigationMenu(String jwtToken);
+
+    NavBarPermission getApplicationList(String matchingIdentifier, String matcher);
 }
