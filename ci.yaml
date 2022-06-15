@@ -1,0 +1,27 @@
+{
+  "apiVersion": "platform.api.ttc.transportation.trimble.com/v202108",
+  "kind": "Project",
+  "metadata": {
+    "gitRepoName": "trimble.transportation.entitlements.navbar.permissions",
+    "googleChatWebhookUrl": "https://chat.googleapis.com/v1/spaces/AAAAwwQc5Ts/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=gZUqNs3olUnvuTfWFmVplWgEW_LSji8o8WIsRPeYcus%3D",
+    "imageName": "tcx/entitlementsnavbarpermissions",
+    "team": "tcx-kuebix",
+    "projectName": "tcx",
+    "webhookScanToken": "tcx-entitlementsnavbarpermissions",
+    "artifactory": "false",
+    "monorepo": "false",
+    "scan": "true",
+    "sonar_projectname": {
+      "tcx-entitlementsnavbarpermissions": "TMW.TCX:trimble.transportation.entitlements.navbar.permissions"
+    },
+    "whitesource_projectname": {
+      "tcx-entitlementsnavbarpermissions": "trimble.transportation.entitlements.navbar.permissions"
+    },
+    "spinnakerPipelineName": {
+      "tcx-entitlementsnavbarpermissions": "tcx-entitlementsnavbarpermissions"
+    },
+    "projectRunType": {
+      "tcx-entitlementsnavbarpermissions": "JAVA"
+    }
+  }
+}
