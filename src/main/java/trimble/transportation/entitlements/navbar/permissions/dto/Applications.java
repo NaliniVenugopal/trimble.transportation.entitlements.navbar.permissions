@@ -2,10 +2,10 @@ package trimble.transportation.entitlements.navbar.permissions.dto;
 
 import lombok.Data;
 
-import java.util.List;
+import java.util.Set;
 
 @Data
 public class Applications {
     private String parent;
-    private List<String> children;
+    private Set<String> children;
 }
