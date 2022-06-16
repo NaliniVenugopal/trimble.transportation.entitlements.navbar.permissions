@@ -1,8 +1,8 @@
 package trimble.transportation.entitlements.navbar.permissions.repositories;
 
-import trimble.transportation.entitlements.navbar.permissions.dto.NavBarPermission;
+import trimble.transportation.entitlements.navbar.permissions.dto.NavBarPermissionEntity;
 
 public interface NavbarEntityCustomRepository {
 
-    NavBarPermission findByMatchingIdentifierAndMatcher(String matchingIdentifier, String matcher);
+    NavBarPermissionEntity findByMatchingIdentifierAndMatcher(String matchingIdentifier, String matcher);
 }

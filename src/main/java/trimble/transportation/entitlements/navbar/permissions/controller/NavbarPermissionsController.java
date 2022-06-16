@@ -13,7 +13,7 @@ import static org.springframework.http.HttpStatus.OK;
 
 @Slf4j
 @RestController
-@RequestMapping("/entitlements/v1/navbar-permissions")
+@RequestMapping("/entitlements/v1/permissions")
 @RequiredArgsConstructor
 public class NavbarPermissionsController {
 
@@ -26,7 +26,7 @@ public class NavbarPermissionsController {
         return ResponseEntity.status(CREATED).body(response);
     }
 
-    @GetMapping("permissions")
+    @GetMapping
     public ResponseEntity<Object> getNavigationBarValues(
             @RequestHeader(value = NavbarPermissionsConstants.X_CREDENTIAL_JWT, required = false) String jwtToken
             //,@RequestHeader(value = "Authorization", required = false) String authorization
@@ -37,7 +37,7 @@ public class NavbarPermissionsController {
     }
 
 
-    @GetMapping("applications/identifier/{identifier}")
+    @GetMapping("identifier/{identifier}")
     public ResponseEntity<Object> getApplicationList(@PathVariable("identifier") String identifier,
                                                      @RequestParam(value = "matcher") String matcher) {
         var response = navbarPermissionsService.getApplicationList(identifier, matcher);
