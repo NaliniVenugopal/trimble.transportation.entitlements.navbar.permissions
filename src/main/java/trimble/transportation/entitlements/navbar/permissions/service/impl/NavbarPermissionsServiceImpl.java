@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import trimble.transportation.entitlements.navbar.permissions.config.ApplicationProperties;
 import trimble.transportation.entitlements.navbar.permissions.constants.NavbarPermissionsConstants;
+import trimble.transportation.entitlements.navbar.permissions.dto.Applications;
 import trimble.transportation.entitlements.navbar.permissions.dto.NavBarPermission;
 import trimble.transportation.entitlements.navbar.permissions.dto.NavBarPermissionEntity;
 import trimble.transportation.entitlements.navbar.permissions.dto.enums.MatchingIdentifier;
@@ -57,6 +58,23 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
         }
     }
 
+    public NavBarPermission updateNavigationBarValues(NavBarPermission navBarPermission) {
+        var navBarEntity = navbarEntityRepository.findByMatchingIdentifierAndMatcher(navBarPermission.getMatchingIdentifier(), navBarPermission.getMatcher());
+        if (navBarEntity == null)
+            throw new GeneralizedException("Matcher and Matching Identifer cannot be found. Use POST to insert values ");
+        var appListEntity = navBarEntity.getApplicationList();
+        navBarPermission.getApplicationList().stream().forEach(application -> {
+            Optional<Applications> isParentPresent = appListEntity.stream().filter(list -> list.getParent().equals(application.getParent())).findFirst();
+            if (isParentPresent.isPresent()) {
+                isParentPresent.get().getChildren().addAll(application.getChildren());
+            } else {
+                appListEntity.add(application);
+            }
+        });
+        var navBarSavedEntity = navbarEntityRepository.save(navBarEntity);
+        return objectMapper.convertValue(navBarSavedEntity, NavBarPermission.class);
+    }
+
     @SneakyThrows
     public NavBarPermission constructNavigationMenu(String jwtToken) {
         String[] tokenChunks = jwtToken.split("\\.");
@@ -95,10 +113,10 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
             dto = getApplicationList(MatchingIdentifier.ACCOUNT_TYPE.getValue(), NavbarPermissionsConstants.BROKER);
         } else if (rolesList != null && rolesList.contains(NavbarPermissionsConstants.SHIPPER_MANAGER)) {
             dto = getApplicationList(MatchingIdentifier.ROLE.getValue(), NavbarPermissionsConstants.SHIPPER_MANAGER_ROLE);
-        } else if (rolesList != null && rolesList.contains(NavbarPermissionsConstants.CONTRACT_MANAGER)) {
-            dto = getApplicationList(MatchingIdentifier.ROLE.getValue(), NavbarPermissionsConstants.CONTRACT_MANAGER_ROLE);
         } else if (accountTypeList.contains(NavbarPermissionsConstants.SHIPPER)) {
             dto = getApplicationList(MatchingIdentifier.ACCOUNT_TYPE.getValue(), NavbarPermissionsConstants.SHIPPER);
+        } else if (rolesList != null && rolesList.contains(NavbarPermissionsConstants.CONTRACT_MANAGER)) {
+            dto = getApplicationList(MatchingIdentifier.ROLE.getValue(), NavbarPermissionsConstants.CONTRACT_MANAGER_ROLE);
         } else {
             dto = getApplicationList(MatchingIdentifier.DEFAULT.getValue(), NavbarPermissionsConstants.DEFAULT_PERMISSIONS);
         }

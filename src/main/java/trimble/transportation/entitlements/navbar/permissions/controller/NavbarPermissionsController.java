@@ -26,6 +26,12 @@ public class NavbarPermissionsController {
         return ResponseEntity.status(CREATED).body(response);
     }
 
+    @PutMapping
+    public ResponseEntity<Object> updateNavigationBarValues(@RequestBody NavBarPermission navBarPermission) {
+        var response = navbarPermissionsService.updateNavigationBarValues(navBarPermission);
+        return ResponseEntity.status(CREATED).body(response);
+    }
+
     @GetMapping
     public ResponseEntity<Object> getNavigationBarValues(
             @RequestHeader(value = NavbarPermissionsConstants.X_CREDENTIAL_JWT, required = false) String jwtToken
