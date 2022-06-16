@@ -7,27 +7,23 @@ import lombok.SneakyThrows;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 import trimble.transportation.entitlements.navbar.permissions.config.ApplicationProperties;
 import trimble.transportation.entitlements.navbar.permissions.constants.NavbarPermissionsConstants;
 import trimble.transportation.entitlements.navbar.permissions.dto.NavBarPermission;
 import trimble.transportation.entitlements.navbar.permissions.dto.NavBarPermissionEntity;
 import trimble.transportation.entitlements.navbar.permissions.dto.enums.MatchingIdentifier;
-import trimble.transportation.entitlements.navbar.permissions.interceptor.TenantContext;
 import trimble.transportation.entitlements.navbar.permissions.repositories.NavbarEntityRepository;
 import trimble.transportation.entitlements.navbar.permissions.service.NavbarPermissionsService;
 import trimble.transportation.entitlements.navbar.permissions.utils.HttpService;
 import trimble.transportation.entitlements.navbar.permissions.utils.NavbarPermissionUtils;
+import trimble.transportation.entitlements.navbar.permissions.utils.exception.GeneralizedException;
 
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
-
-    private final TenantContext tenantContext;
 
     private final HttpService httpService;
 
@@ -48,8 +44,17 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
 
 
     public NavBarPermission postNavigationBarValues(NavBarPermission navBarPermission) {
-        var response = navbarEntityRepository.save(objectMapper.convertValue(navBarPermission, NavBarPermissionEntity.class));
-        return objectMapper.convertValue(response, NavBarPermission.class);
+        var navBarEntity = navbarEntityRepository.findByMatchingIdentifierAndMatcher(navBarPermission.getMatchingIdentifier(), navBarPermission.getMatcher());
+        if (!ObjectUtils.isEmpty(navBarEntity)) {
+            navBarEntity.setApplicationList(navBarPermission.getApplicationList());
+            var response = navbarEntityRepository.save(navBarEntity);
+            return objectMapper.convertValue(response, NavBarPermission.class);
+        } else {
+            var navbar = objectMapper.convertValue(navBarPermission, NavBarPermissionEntity.class);
+            navbar.setId(UUID.randomUUID());
+            var response = navbarEntityRepository.save(navbar);
+            return objectMapper.convertValue(response, NavBarPermission.class);
+        }
     }
 
     @SneakyThrows
@@ -85,31 +90,16 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
     }
 
     private NavBarPermission construcRefDto(List<String> accountTypeList, List<String> rolesList) {
-        NavBarPermission dto = new NavBarPermission();
+        NavBarPermission dto = null;
         if (accountTypeList.contains(NavbarPermissionsConstants.BROKER)) {
-//            dto.setMatchingIdentifier(NavbarPermissionsConstants.ACCOUNT_TYPE);
-//            dto.setMatcher(NavbarPermissionsConstants.BROKER_TEXT);
-//            dto.setApplicationList(getApplicationList(AccountType.BROKER.getValue()));
             dto = getApplicationList(MatchingIdentifier.ACCOUNT_TYPE.getValue(), NavbarPermissionsConstants.BROKER);
         } else if (rolesList != null && rolesList.contains(NavbarPermissionsConstants.SHIPPER_MANAGER)) {
-//            dto.setMatchingIdentifier(NavbarPermissionsConstants.ROLE_TYPE);
-//            dto.setMatcher(NavbarPermissionsConstants.SHIPPER_MANAGER);
-//            dto.setApplicationList(getApplicationList(AccountType.SHIPPER.getValue()));
             dto = getApplicationList(MatchingIdentifier.ROLE.getValue(), NavbarPermissionsConstants.SHIPPER_MANAGER_ROLE);
         } else if (rolesList != null && rolesList.contains(NavbarPermissionsConstants.CONTRACT_MANAGER)) {
-//            dto.setMatchingIdentifier(NavbarPermissionsConstants.ROLE_TYPE);
-//            dto.setMatcher(NavbarPermissionsConstants.CONTRACT_MANAGER);
-//            dto.setApplicationList(getApplicationList(AccountType.CONTRACT.getValue()));
             dto = getApplicationList(MatchingIdentifier.ROLE.getValue(), NavbarPermissionsConstants.CONTRACT_MANAGER_ROLE);
         } else if (accountTypeList.contains(NavbarPermissionsConstants.SHIPPER)) {
-//            dto.setMatchingIdentifier(NavbarPermissionsConstants.ACCOUNT_TYPE);
-//            dto.setMatcher(NavbarPermissionsConstants.SHIPPER_TEXT);
-//            dto.setApplicationList(getApplicationList(AccountType.SHIPPER.getValue()));
             dto = getApplicationList(MatchingIdentifier.ACCOUNT_TYPE.getValue(), NavbarPermissionsConstants.SHIPPER);
         } else {
-//            dto.setMatchingIdentifier(NavbarPermissionsConstants.DEFAULT);
-//            dto.setMatcher(NavbarPermissionsConstants.DEFAULT_PERMISSIONS);
-//            dto.setApplicationList(getApplicationList(AccountType.SHIPPER.getValue()));
             dto = getApplicationList(MatchingIdentifier.DEFAULT.getValue(), NavbarPermissionsConstants.DEFAULT_PERMISSIONS);
         }
         return dto;
@@ -117,7 +107,12 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
 
 
     public NavBarPermission getApplicationList(String matchingIdentifier, String matcher) {
-        return navbarEntityRepository.findByMatchingIdentifierAndMatcher(matchingIdentifier, matcher);
+        var navBarEntity = navbarEntityRepository.findByMatchingIdentifierAndMatcher(matchingIdentifier, matcher);
+        if (!ObjectUtils.isEmpty(navBarEntity)) {
+            return objectMapper.convertValue(navBarEntity, NavBarPermission.class);
+        } else {
+            throw new GeneralizedException("No records available");
+        }
     }
 
 }
