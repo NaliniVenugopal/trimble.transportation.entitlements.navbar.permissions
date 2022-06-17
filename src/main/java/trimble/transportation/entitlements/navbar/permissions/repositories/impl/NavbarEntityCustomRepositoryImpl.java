@@ -23,4 +23,10 @@ public class NavbarEntityCustomRepositoryImpl implements NavbarEntityCustomRepos
         return mongoTemplate.findOne(query, NavBarPermissionEntity.class);
     }
 
+    public void deleteByMatchingIdentifierAndMatcher(String matchingIdentifier, String matcher) {
+        Query query = new Query().addCriteria(new Criteria().andOperator(Criteria.where("matchingIdentifier").is(matchingIdentifier),
+                Criteria.where("matcher").is(matcher)));
+        mongoTemplate.remove(query, NavBarPermissionEntity.class);
+    }
+
 }

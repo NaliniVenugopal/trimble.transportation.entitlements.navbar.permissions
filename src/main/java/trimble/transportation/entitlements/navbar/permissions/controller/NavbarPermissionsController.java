@@ -2,6 +2,7 @@ package trimble.transportation.entitlements.navbar.permissions.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import trimble.transportation.entitlements.navbar.permissions.constants.NavbarPermissionsConstants;
@@ -48,6 +49,13 @@ public class NavbarPermissionsController {
                                                      @RequestParam(value = "matcher") String matcher) {
         var response = navbarPermissionsService.getApplicationList(identifier, matcher);
         return ResponseEntity.status(OK).body(response);
+    }
+
+    @DeleteMapping("identifier/{identifier}")
+    public ResponseEntity<Object> deletePermission(@PathVariable("identifier") String identifier,
+                                                   @RequestParam(value = "matcher") String matcher) {
+        navbarPermissionsService.deletePermission(identifier, matcher);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
 }
