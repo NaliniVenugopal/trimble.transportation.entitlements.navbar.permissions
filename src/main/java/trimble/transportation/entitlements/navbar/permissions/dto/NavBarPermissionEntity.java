@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Data
-@Document(collection = "NavBarPermissions")
+@Document(collection = "nav_bar_permissions")
 public class NavBarPermissionEntity {
 
     @Id
