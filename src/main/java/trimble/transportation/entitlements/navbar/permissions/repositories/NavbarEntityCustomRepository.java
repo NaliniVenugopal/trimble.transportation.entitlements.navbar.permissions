@@ -5,4 +5,6 @@ import trimble.transportation.entitlements.navbar.permissions.dto.NavBarPermissi
 public interface NavbarEntityCustomRepository {
 
     NavBarPermissionEntity findByMatchingIdentifierAndMatcher(String matchingIdentifier, String matcher);
+
+    void deleteByMatchingIdentifierAndMatcher(String matchingIdentifier, String matcher);
 }

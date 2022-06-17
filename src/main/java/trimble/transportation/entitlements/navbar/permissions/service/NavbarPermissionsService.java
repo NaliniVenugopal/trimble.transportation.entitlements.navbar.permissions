@@ -12,4 +12,6 @@ public interface NavbarPermissionsService {
     NavBarPermission constructNavigationMenu(String jwtToken);
 
     NavBarPermission getApplicationList(String matchingIdentifier, String matcher);
+
+    void deletePermission(String matchingIdentifier, String matcher);
 }

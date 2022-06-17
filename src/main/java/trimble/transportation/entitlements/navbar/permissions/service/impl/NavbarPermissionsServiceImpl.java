@@ -7,13 +7,16 @@ import lombok.SneakyThrows;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import trimble.transportation.entitlements.navbar.permissions.config.ApplicationProperties;
 import trimble.transportation.entitlements.navbar.permissions.constants.NavbarPermissionsConstants;
 import trimble.transportation.entitlements.navbar.permissions.dto.Applications;
+import trimble.transportation.entitlements.navbar.permissions.dto.Heirarchy;
 import trimble.transportation.entitlements.navbar.permissions.dto.NavBarPermission;
 import trimble.transportation.entitlements.navbar.permissions.dto.NavBarPermissionEntity;
 import trimble.transportation.entitlements.navbar.permissions.dto.enums.MatchingIdentifier;
+import trimble.transportation.entitlements.navbar.permissions.repositories.HeirarchyEntityRepository;
 import trimble.transportation.entitlements.navbar.permissions.repositories.NavbarEntityRepository;
 import trimble.transportation.entitlements.navbar.permissions.service.NavbarPermissionsService;
 import trimble.transportation.entitlements.navbar.permissions.utils.HttpService;
@@ -29,6 +32,8 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
     private final HttpService httpService;
 
     private final NavbarEntityRepository navbarEntityRepository;
+
+    private final HeirarchyEntityRepository heirarchyEntityRepository;
 
     private final ApplicationProperties applicationProperties;
 
@@ -96,7 +101,7 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
         headers.put("x-credential-jwt", jwtToken);
         headers.put("Content-Type", "application/json");
         //Comment before commit
-//        headers.put("Authorization", "Bearer " + authorization);
+        //headers.put("Authorization", "Bearer " + authorization);
 
         JSONObject accountJson = new JSONObject(httpService.getEntity(url, headers, String.class).getResponseBody());
 
@@ -107,18 +112,46 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
 
     }
 
+//    private NavBarPermission construcRefDto(List<String> accountTypeList, List<String> rolesList) {
+//        NavBarPermission dto = null;
+//        if (accountTypeList.contains(NavbarPermissionsConstants.BROKER)) {
+//            dto = getApplicationList(MatchingIdentifier.ACCOUNT_TYPE.getValue(), NavbarPermissionsConstants.BROKER);
+//        } else if (rolesList != null && rolesList.contains(NavbarPermissionsConstants.SHIPPER_MANAGER)) {
+//            dto = getApplicationList(MatchingIdentifier.ROLE.getValue(), NavbarPermissionsConstants.SHIPPER_MANAGER_ROLE);
+//        } else if (accountTypeList.contains(NavbarPermissionsConstants.SHIPPER)) {
+//            dto = getApplicationList(MatchingIdentifier.ACCOUNT_TYPE.getValue(), NavbarPermissionsConstants.SHIPPER);
+//        } else if (rolesList != null && rolesList.contains(NavbarPermissionsConstants.CONTRACT_MANAGER)) {
+//            dto = getApplicationList(MatchingIdentifier.ROLE.getValue(), NavbarPermissionsConstants.CONTRACT_MANAGER_ROLE);
+//            } else {
+//                dto = getApplicationList(MatchingIdentifier.DEFAULT.getValue(), NavbarPermissionsConstants.DEFAULT_PERMISSIONS);
+//            }
+//        return dto;
+//    }
+
     private NavBarPermission construcRefDto(List<String> accountTypeList, List<String> rolesList) {
         NavBarPermission dto = null;
-        if (accountTypeList.contains(NavbarPermissionsConstants.BROKER)) {
-            dto = getApplicationList(MatchingIdentifier.ACCOUNT_TYPE.getValue(), NavbarPermissionsConstants.BROKER);
-        } else if (rolesList != null && rolesList.contains(NavbarPermissionsConstants.SHIPPER_MANAGER)) {
-            dto = getApplicationList(MatchingIdentifier.ROLE.getValue(), NavbarPermissionsConstants.SHIPPER_MANAGER_ROLE);
-        } else if (accountTypeList.contains(NavbarPermissionsConstants.SHIPPER)) {
-            dto = getApplicationList(MatchingIdentifier.ACCOUNT_TYPE.getValue(), NavbarPermissionsConstants.SHIPPER);
-        } else if (rolesList != null && rolesList.contains(NavbarPermissionsConstants.CONTRACT_MANAGER)) {
-            dto = getApplicationList(MatchingIdentifier.ROLE.getValue(), NavbarPermissionsConstants.CONTRACT_MANAGER_ROLE);
-        } else {
-            dto = getApplicationList(MatchingIdentifier.DEFAULT.getValue(), NavbarPermissionsConstants.DEFAULT_PERMISSIONS);
+        var heirarchyEntityList = heirarchyEntityRepository.findAll();
+        var heirarchyEntity = heirarchyEntityList.get(0);
+        var heirarchyList = heirarchyEntity.getHeirarchyList();
+        for (Heirarchy hierarchy : heirarchyList) {
+
+            switch (hierarchy.getType()) {
+                case "ACCOUNT_TYPE":
+                    if (!CollectionUtils.isEmpty(accountTypeList) && accountTypeList.contains(hierarchy.getValue())) {
+                        dto = getApplicationList(MatchingIdentifier.ACCOUNT_TYPE.getValue(), hierarchy.getValue());
+                        return dto;
+                    }
+                    break;
+                case "ROLE":
+                    if (!CollectionUtils.isEmpty(rolesList) && rolesList.contains(hierarchy.getValue())) {
+                        dto = getApplicationList(MatchingIdentifier.ROLE.getValue(), hierarchy.getValue());
+                        return dto;
+                    }
+                    break;
+                case "DEFAULT":
+                    dto = getApplicationList(MatchingIdentifier.DEFAULT.getValue(), hierarchy.getValue());
+                    return dto;
+            }
         }
         return dto;
     }
@@ -131,6 +164,10 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
         } else {
             throw new GeneralizedException("No records available");
         }
+    }
+
+    public void deletePermission(String matchingIdentifier, String matcher) {
+        navbarEntityRepository.deleteByMatchingIdentifierAndMatcher(matchingIdentifier, matcher);
     }
 
 }
