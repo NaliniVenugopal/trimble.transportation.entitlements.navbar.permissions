@@ -101,7 +101,7 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
         headers.put("x-credential-jwt", jwtToken);
         headers.put("Content-Type", "application/json");
         //Comment before commit
-        headers.put("Authorization", "Bearer " + authorization);
+        //headers.put("Authorization", "Bearer " + authorization);
 
         JSONObject accountJson = new JSONObject(httpService.getEntity(url, headers, String.class).getResponseBody());
 
