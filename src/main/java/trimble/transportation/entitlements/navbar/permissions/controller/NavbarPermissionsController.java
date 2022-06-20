@@ -2,6 +2,7 @@ package trimble.transportation.entitlements.navbar.permissions.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import trimble.transportation.entitlements.navbar.permissions.constants.NavbarPermissionsConstants;
@@ -13,7 +14,7 @@ import static org.springframework.http.HttpStatus.OK;
 
 @Slf4j
 @RestController
-@RequestMapping("/entitlements/v1/navbar-permissions")
+@RequestMapping("/entitlements/v1/permissions")
 @RequiredArgsConstructor
 public class NavbarPermissionsController {
 
@@ -26,7 +27,13 @@ public class NavbarPermissionsController {
         return ResponseEntity.status(CREATED).body(response);
     }
 
-    @GetMapping("permissions")
+    @PutMapping
+    public ResponseEntity<Object> updateNavigationBarValues(@RequestBody NavBarPermission navBarPermission) {
+        var response = navbarPermissionsService.updateNavigationBarValues(navBarPermission);
+        return ResponseEntity.status(CREATED).body(response);
+    }
+
+    @GetMapping
     public ResponseEntity<Object> getNavigationBarValues(
             @RequestHeader(value = NavbarPermissionsConstants.X_CREDENTIAL_JWT, required = false) String jwtToken
             //,@RequestHeader(value = "Authorization", required = false) String authorization
@@ -37,11 +44,18 @@ public class NavbarPermissionsController {
     }
 
 
-    @GetMapping("applications/identifier/{identifier}")
+    @GetMapping("identifier/{identifier}")
     public ResponseEntity<Object> getApplicationList(@PathVariable("identifier") String identifier,
                                                      @RequestParam(value = "matcher") String matcher) {
         var response = navbarPermissionsService.getApplicationList(identifier, matcher);
         return ResponseEntity.status(OK).body(response);
+    }
+
+    @DeleteMapping("identifier/{identifier}")
+    public ResponseEntity<Object> deletePermission(@PathVariable("identifier") String identifier,
+                                                   @RequestParam(value = "matcher") String matcher) {
+        navbarPermissionsService.deletePermission(identifier, matcher);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
 }

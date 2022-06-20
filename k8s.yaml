@@ -195,6 +195,10 @@ spec:
         host: "${ parameters.canonicalName }"
         subset: v2
       weight: 100
+      headers:
+        response:
+          add:
+            Access-Control-Allow-Origin: '*'
 ---
 #apiVersion: networking.istio.io/v1alpha3
 #kind: VirtualService
