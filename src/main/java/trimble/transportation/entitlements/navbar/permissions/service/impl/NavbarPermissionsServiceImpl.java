@@ -24,6 +24,7 @@ import trimble.transportation.entitlements.navbar.permissions.utils.NavbarPermis
 import trimble.transportation.entitlements.navbar.permissions.utils.exception.GeneralizedException;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 @RequiredArgsConstructor
@@ -101,7 +102,7 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
         headers.put("x-credential-jwt", jwtToken);
         headers.put("Content-Type", "application/json");
         //Comment before commit
-        //headers.put("Authorization", "Bearer " + authorization);
+//        headers.put("Authorization", "Bearer " + authorization);
 
         JSONObject accountJson = new JSONObject(httpService.getEntity(url, headers, String.class).getResponseBody());
 
@@ -112,28 +113,56 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
 
     }
 
-//    private NavBarPermission construcRefDto(List<String> accountTypeList, List<String> rolesList) {
-//        NavBarPermission dto = null;
-//        if (accountTypeList.contains(NavbarPermissionsConstants.BROKER)) {
-//            dto = getApplicationList(MatchingIdentifier.ACCOUNT_TYPE.getValue(), NavbarPermissionsConstants.BROKER);
-//        } else if (rolesList != null && rolesList.contains(NavbarPermissionsConstants.SHIPPER_MANAGER)) {
-//            dto = getApplicationList(MatchingIdentifier.ROLE.getValue(), NavbarPermissionsConstants.SHIPPER_MANAGER_ROLE);
-//        } else if (accountTypeList.contains(NavbarPermissionsConstants.SHIPPER)) {
-//            dto = getApplicationList(MatchingIdentifier.ACCOUNT_TYPE.getValue(), NavbarPermissionsConstants.SHIPPER);
-//        } else if (rolesList != null && rolesList.contains(NavbarPermissionsConstants.CONTRACT_MANAGER)) {
-//            dto = getApplicationList(MatchingIdentifier.ROLE.getValue(), NavbarPermissionsConstants.CONTRACT_MANAGER_ROLE);
-//            } else {
-//                dto = getApplicationList(MatchingIdentifier.DEFAULT.getValue(), NavbarPermissionsConstants.DEFAULT_PERMISSIONS);
-//            }
-//        return dto;
-//    }
-
     private NavBarPermission construcRefDto(List<String> accountTypeList, List<String> rolesList) {
+//        accountTypeList.add("BROKER");
         NavBarPermission dto = null;
+        NavBarPermission dto1 = null;
         var heirarchyEntityList = heirarchyEntityRepository.findAll();
         var heirarchyEntity = heirarchyEntityList.get(0);
         var heirarchyList = heirarchyEntity.getHeirarchyList();
         for (Heirarchy hierarchy : heirarchyList) {
+            if (hierarchy.getValue().contains(",") && canProceedMultipleAccountCheck(hierarchy,accountTypeList)) {
+
+                for (String singleAccountType : hierarchy.getValue().split(",")) {
+                    if (dto == null && MatchingIdentifier.ACCOUNT_TYPE.getValue().equals(hierarchy.getType())
+                            && accountTypeList.contains(singleAccountType)) {
+                        dto = getApplicationList(MatchingIdentifier.ACCOUNT_TYPE.getValue(), singleAccountType);  //FETCH the BROKER values
+                    }
+                    //BROKER values already populated in DTO
+                    else {
+                        if (MatchingIdentifier.ACCOUNT_TYPE.getValue().equals(hierarchy.getType())
+                                && accountTypeList.contains(singleAccountType)) {
+                            dto1 = getApplicationList(MatchingIdentifier.ACCOUNT_TYPE.getValue(), singleAccountType); // FETCH the SHIPPER VALUES
+                            if (dto != null && !dto.getApplicationList().isEmpty()) {
+
+                                //LOGIC
+                                NavBarPermission finalDto = dto;
+                                NavBarPermission finalDto1 = dto1;
+                                dto.getApplicationList().stream().forEach(firstApplication -> {
+                                    AtomicBoolean isParentFound = new AtomicBoolean(false);
+                                    finalDto1.getApplicationList().stream().forEach(secondApplication -> {
+                                        if (firstApplication.getParent().equals(secondApplication.getParent())) {
+                                            isParentFound.set(true);
+                                            secondApplication.getChildren().addAll(firstApplication.getChildren());
+                                        }
+                                    });
+                                    if (!isParentFound.get())
+                                        finalDto1.getApplicationList().addAll(finalDto.getApplicationList());
+                                });
+
+
+                            } else {
+                                dto = new NavBarPermission();
+                                dto.setApplicationList(dto1.getApplicationList());
+                            }
+
+                        }
+                    }
+                }
+                dto1.setMatchingIdentifier(hierarchy.getType());
+                dto1.setMatcher(hierarchy.getValue());
+                return dto1;
+            }
 
             switch (hierarchy.getType()) {
                 case "ACCOUNT_TYPE":
@@ -168,6 +197,15 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
 
     public void deletePermission(String matchingIdentifier, String matcher) {
         navbarEntityRepository.deleteByMatchingIdentifierAndMatcher(matchingIdentifier, matcher);
+    }
+
+    private boolean canProceedMultipleAccountCheck(Heirarchy hierarchy,List<String> accountTypeList){
+        for (String singleAccountType : hierarchy.getValue().split(",")) {
+            if(!accountTypeList.contains(singleAccountType)){
+               return false;
+            }
+        }
+        return true;
     }
 
 }
