@@ -15,5 +15,6 @@ public class NavBarPermissionEntity {
     private UUID id;
     private String matchingIdentifier;
     private String matcher;
+    private String defaultURL;
     private List<Applications> applicationList;
 }

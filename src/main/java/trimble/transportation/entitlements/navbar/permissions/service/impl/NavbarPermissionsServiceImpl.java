@@ -112,22 +112,6 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
 
     }
 
-//    private NavBarPermission construcRefDto(List<String> accountTypeList, List<String> rolesList) {
-//        NavBarPermission dto = null;
-//        if (accountTypeList.contains(NavbarPermissionsConstants.BROKER)) {
-//            dto = getApplicationList(MatchingIdentifier.ACCOUNT_TYPE.getValue(), NavbarPermissionsConstants.BROKER);
-//        } else if (rolesList != null && rolesList.contains(NavbarPermissionsConstants.SHIPPER_MANAGER)) {
-//            dto = getApplicationList(MatchingIdentifier.ROLE.getValue(), NavbarPermissionsConstants.SHIPPER_MANAGER_ROLE);
-//        } else if (accountTypeList.contains(NavbarPermissionsConstants.SHIPPER)) {
-//            dto = getApplicationList(MatchingIdentifier.ACCOUNT_TYPE.getValue(), NavbarPermissionsConstants.SHIPPER);
-//        } else if (rolesList != null && rolesList.contains(NavbarPermissionsConstants.CONTRACT_MANAGER)) {
-//            dto = getApplicationList(MatchingIdentifier.ROLE.getValue(), NavbarPermissionsConstants.CONTRACT_MANAGER_ROLE);
-//            } else {
-//                dto = getApplicationList(MatchingIdentifier.DEFAULT.getValue(), NavbarPermissionsConstants.DEFAULT_PERMISSIONS);
-//            }
-//        return dto;
-//    }
-
     private NavBarPermission construcRefDto(List<String> accountTypeList, List<String> rolesList) {
         NavBarPermission dto = null;
         var heirarchyEntityList = heirarchyEntityRepository.findAll();
