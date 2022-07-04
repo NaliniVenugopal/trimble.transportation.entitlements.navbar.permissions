@@ -1,14 +1,28 @@
 package trimble.transportation.entitlements.navbar.permissions.service.impl;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.apache.commons.collections4.CollectionUtils;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import trimble.transportation.entitlements.navbar.permissions.config.ApplicationProperties;
 import trimble.transportation.entitlements.navbar.permissions.constants.NavbarPermissionsConstants;
 import trimble.transportation.entitlements.navbar.permissions.dto.Applications;
@@ -22,9 +36,6 @@ import trimble.transportation.entitlements.navbar.permissions.service.NavbarPerm
 import trimble.transportation.entitlements.navbar.permissions.utils.HttpService;
 import trimble.transportation.entitlements.navbar.permissions.utils.NavbarPermissionUtils;
 import trimble.transportation.entitlements.navbar.permissions.utils.exception.GeneralizedException;
-
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 @RequiredArgsConstructor
@@ -96,100 +107,109 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
             rolesList = new ObjectMapper().readValue(roles.toString(), new TypeReference<List<String>>() {
             });
         }
-
         Map<String, String> headers = new HashMap<>();
         var url = NavbarPermissionUtils.concatStrings(accountServiceUrl, accountServiceEndpoint, accountId);
         headers.put("x-credential-jwt", jwtToken);
         headers.put("Content-Type", "application/json");
-        //Comment before commit
-//        headers.put("Authorization", "Bearer " + authorization);
-
         JSONObject accountJson = new JSONObject(httpService.getEntity(url, headers, String.class).getResponseBody());
-
         var accountTypes = accountJson.get("accountTypes");
         var accountTypeList = new ObjectMapper().readValue(accountTypes.toString(), new TypeReference<List<String>>() {
         });
         return construcRefDto(accountTypeList, rolesList);
-
     }
 
     private NavBarPermission construcRefDto(List<String> accountTypeList, List<String> rolesList) {
-//        accountTypeList.add("BROKER");
-        NavBarPermission dto = null;
-        NavBarPermission dto1 = null;
+    	NavBarPermission initialList = null;
         var heirarchyEntityList = heirarchyEntityRepository.findAll();
         var heirarchyEntity = heirarchyEntityList.get(0);
         var heirarchyList = heirarchyEntity.getHeirarchyList();
+        
         for (Heirarchy hierarchy : heirarchyList) {
-            if (hierarchy.getValue().contains(",") && canProceedMultipleAccountCheck(hierarchy,accountTypeList)) {
-
-                for (String singleAccountType : hierarchy.getValue().split(",")) {
-                    if (dto == null && MatchingIdentifier.ACCOUNT_TYPE.getValue().equals(hierarchy.getType())
-                            && accountTypeList.contains(singleAccountType)) {
-                        dto = getApplicationList(MatchingIdentifier.ACCOUNT_TYPE.getValue(), singleAccountType);  //FETCH the BROKER values
-                    }
-                    //BROKER values already populated in DTO
-                    else {
-                        if (MatchingIdentifier.ACCOUNT_TYPE.getValue().equals(hierarchy.getType())
-                                && accountTypeList.contains(singleAccountType)) {
-                            dto1 = getApplicationList(MatchingIdentifier.ACCOUNT_TYPE.getValue(), singleAccountType); // FETCH the SHIPPER VALUES
-                            if (dto != null && !dto.getApplicationList().isEmpty()) {
-
-                                //LOGIC
-                                NavBarPermission finalDto = dto;
-                                NavBarPermission finalDto1 = dto1;
-                                dto.getApplicationList().stream().forEach(firstApplication -> {
-                                    AtomicBoolean isParentFound = new AtomicBoolean(false);
-                                    finalDto1.getApplicationList().stream().forEach(secondApplication -> {
-                                        if (firstApplication.getParent().equals(secondApplication.getParent())) {
-                                            isParentFound.set(true);
-                                            secondApplication.getChildren().addAll(firstApplication.getChildren());
-                                        }
-                                    });
-                                    if (!isParentFound.get())
-                                        finalDto1.getApplicationList().addAll(finalDto.getApplicationList());
-                                });
-
-
-                            } else {
-                                dto = new NavBarPermission();
-                                dto.setApplicationList(dto1.getApplicationList());
-                            }
-
-                        }
-                    }
-                }
-                dto1.setMatchingIdentifier(hierarchy.getType());
-                dto1.setMatcher(hierarchy.getValue());
-                return dto1;
-            }
-
-            switch (hierarchy.getType()) {
-                case "ACCOUNT_TYPE":
-                    if (!CollectionUtils.isEmpty(accountTypeList) && accountTypeList.contains(hierarchy.getValue())) {
-                        dto = getApplicationList(MatchingIdentifier.ACCOUNT_TYPE.getValue(), hierarchy.getValue());
-                        return dto;
-                    }
-                    break;
-                case "ROLE":
-                    if (!CollectionUtils.isEmpty(rolesList) && rolesList.contains(hierarchy.getValue())) {
-                        dto = getApplicationList(MatchingIdentifier.ROLE.getValue(), hierarchy.getValue());
-                        return dto;
-                    }
-                    break;
-                case "DEFAULT":
-                    dto = getApplicationList(MatchingIdentifier.DEFAULT.getValue(), hierarchy.getValue());
-                    return dto;
+            if (hierarchy.getValue().contains(",")) {
+            	if(canProceedMultipleAccountCheck(hierarchy,accountTypeList))
+            		return handleMultipleValues(hierarchy, accountTypeList);
+            }else {
+	            switch (hierarchy.getType()) {
+	                case "ACCOUNT_TYPE":
+	                    if (!CollectionUtils.isEmpty(accountTypeList) && accountTypeList.contains(hierarchy.getValue())) {
+	                    	initialList = getApplicationList(MatchingIdentifier.ACCOUNT_TYPE.getValue(), hierarchy.getValue());
+	                        return initialList;
+	                    }
+	                    break;
+	                case "ROLE":
+	                    if (!CollectionUtils.isEmpty(rolesList) && rolesList.contains(hierarchy.getValue())) {
+	                    	initialList = getApplicationList(MatchingIdentifier.ROLE.getValue(), hierarchy.getValue());
+	                        return initialList;
+	                    }
+	                    break;
+	                case "DEFAULT":
+	                	initialList = getApplicationList(MatchingIdentifier.DEFAULT.getValue(), hierarchy.getValue());
+	                    return initialList;
+	            }
             }
         }
-        return dto;
+        if(initialList == null) initialList = getApplicationList(MatchingIdentifier.DEFAULT.getValue(), "DEFAULT_PERMISSIONS");
+        return initialList;
     }
 
+   private NavBarPermission handleMultipleValues(Heirarchy hierarchy, List<String> accountTypeList) {
+	   NavBarPermission initialList = null;
+       NavBarPermission secondaryList = null;
+	   for (String singleAccountType : hierarchy.getValue().split(",")) {
+           if (initialList == null && MatchingIdentifier.ACCOUNT_TYPE.getValue().equals(hierarchy.getType())
+                   && accountTypeList.contains(singleAccountType)) {
+           	initialList = getApplicationListWithMap(MatchingIdentifier.ACCOUNT_TYPE.getValue(), singleAccountType);  
+           }
+           else {
+               if (MatchingIdentifier.ACCOUNT_TYPE.getValue().equals(hierarchy.getType())
+                       && accountTypeList.contains(singleAccountType)) {
+               	NavBarPermission mergedList = initialList;
+               	secondaryList = getApplicationListWithMap(MatchingIdentifier.ACCOUNT_TYPE.getValue(), singleAccountType); 
+                   if (initialList != null && !initialList.getApplicationList().isEmpty()) {
+                   	secondaryList.getMapApplication().forEach(
+                 			  (key, value) -> 
+                 			  			mergedList.getMapApplication().merge(key, value, (v1, v2) ->  {
+                 			  				mergedList.getMapApplication().get(key).addAll(v2.stream().collect(Collectors.toList()));
+                 			  				return mergedList.getMapApplication().get(key);
+                 			  			}
+                 		));
+                   } else {
+                   	initialList = new NavBarPermission();
+                   	initialList.setApplicationList(secondaryList.getApplicationList());
+                   }
 
+               }
+           }
+       }
+       initialList.setMatchingIdentifier(hierarchy.getType());
+       initialList.setMatcher(hierarchy.getValue());
+       List<Applications> applicationList =  initialList.getMapApplication().entrySet()
+    		   					.stream()
+    		   					.map(link -> new Applications(link.getKey(),link.getValue()))
+    		   					.collect(Collectors.toCollection(ArrayList::new));
+       
+       initialList.setApplicationList(applicationList);
+       return initialList;
+   }
+    
     public NavBarPermission getApplicationList(String matchingIdentifier, String matcher) {
         var navBarEntity = navbarEntityRepository.findByMatchingIdentifierAndMatcher(matchingIdentifier, matcher);
         if (!ObjectUtils.isEmpty(navBarEntity)) {
             return objectMapper.convertValue(navBarEntity, NavBarPermission.class);
+        } else {
+            throw new GeneralizedException("No records available");
+        }
+    }
+    
+    public NavBarPermission getApplicationListWithMap(String matchingIdentifier, String matcher) {
+        var navBarEntity = navbarEntityRepository.findByMatchingIdentifierAndMatcher(matchingIdentifier, matcher);
+        if (!ObjectUtils.isEmpty(navBarEntity)) {
+        	var navBarPermission =  objectMapper.convertValue(navBarEntity, NavBarPermission.class);
+        	Map<String, LinkedHashSet<String>> convertedMap =navBarPermission.getApplicationList().stream().
+        							collect(Collectors.toMap(Applications::getParent, Applications::getChildren,
+        									(parent, children) -> parent, LinkedHashMap::new ));
+        	navBarPermission.setMapApplication(convertedMap);
+        	return navBarPermission;
         } else {
             throw new GeneralizedException("No records available");
         }
