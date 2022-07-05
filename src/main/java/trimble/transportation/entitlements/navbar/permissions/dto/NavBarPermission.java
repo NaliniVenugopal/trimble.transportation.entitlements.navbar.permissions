@@ -12,6 +12,7 @@ import lombok.Data;
 public class NavBarPermission {
     private String matchingIdentifier;
     private String matcher;
+    private String defaultURL;
     private List<Applications> applicationList;
     
     @JsonIgnore
