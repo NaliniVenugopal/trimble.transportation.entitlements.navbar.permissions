@@ -1,11 +1,14 @@
 package trimble.transportation.entitlements.navbar.permissions.dto;
 
-import lombok.Data;
-
 import java.util.LinkedHashSet;
-import java.util.Set;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class Applications {
     private String parent;
     private LinkedHashSet<String> children;

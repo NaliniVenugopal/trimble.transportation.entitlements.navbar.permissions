@@ -1,29 +1,39 @@
 package trimble.transportation.entitlements.navbar.permissions.service.impl;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
-import trimble.transportation.entitlements.navbar.permissions.config.ApplicationProperties;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import trimble.transportation.entitlements.navbar.permissions.constants.NavbarPermissionsConstants;
 import trimble.transportation.entitlements.navbar.permissions.dto.Applications;
-import trimble.transportation.entitlements.navbar.permissions.dto.Heirarchy;
 import trimble.transportation.entitlements.navbar.permissions.dto.NavBarPermission;
 import trimble.transportation.entitlements.navbar.permissions.dto.NavBarPermissionEntity;
 import trimble.transportation.entitlements.navbar.permissions.dto.enums.MatchingIdentifier;
-import trimble.transportation.entitlements.navbar.permissions.repositories.HeirarchyEntityRepository;
 import trimble.transportation.entitlements.navbar.permissions.repositories.NavbarEntityRepository;
 import trimble.transportation.entitlements.navbar.permissions.service.NavbarPermissionsService;
 import trimble.transportation.entitlements.navbar.permissions.utils.HttpService;
 import trimble.transportation.entitlements.navbar.permissions.utils.NavbarPermissionUtils;
 import trimble.transportation.entitlements.navbar.permissions.utils.exception.GeneralizedException;
-
-import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -32,10 +42,6 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
     private final HttpService httpService;
 
     private final NavbarEntityRepository navbarEntityRepository;
-
-    private final HeirarchyEntityRepository heirarchyEntityRepository;
-
-    private final ApplicationProperties applicationProperties;
 
     private final ObjectMapper objectMapper;
 
@@ -95,51 +101,55 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
             rolesList = new ObjectMapper().readValue(roles.toString(), new TypeReference<List<String>>() {
             });
         }
-
         Map<String, String> headers = new HashMap<>();
         var url = NavbarPermissionUtils.concatStrings(accountServiceUrl, accountServiceEndpoint, accountId);
         headers.put("x-credential-jwt", jwtToken);
         headers.put("Content-Type", "application/json");
         //Comment before commit
-        //headers.put("Authorization", "Bearer " + authorization);
-
+//        headers.put("Authorization", "Bearer " + authorization);
         JSONObject accountJson = new JSONObject(httpService.getEntity(url, headers, String.class).getResponseBody());
-
         var accountTypes = accountJson.get("accountTypes");
         var accountTypeList = new ObjectMapper().readValue(accountTypes.toString(), new TypeReference<List<String>>() {
         });
-        return construcRefDto(accountTypeList, rolesList);
-
+        return handleMultipleAccountTypes(accountTypeList);
     }
 
-    private NavBarPermission construcRefDto(List<String> accountTypeList, List<String> rolesList) {
-        NavBarPermission dto = null;
-        var heirarchyEntityList = heirarchyEntityRepository.findAll();
-        var heirarchyEntity = heirarchyEntityList.get(0);
-        var heirarchyList = heirarchyEntity.getHeirarchyList();
-        for (Heirarchy hierarchy : heirarchyList) {
-
-            switch (hierarchy.getType()) {
-                case "ACCOUNT_TYPE":
-                    if (!CollectionUtils.isEmpty(accountTypeList) && accountTypeList.contains(hierarchy.getValue())) {
-                        dto = getApplicationList(MatchingIdentifier.ACCOUNT_TYPE.getValue(), hierarchy.getValue());
-                        return dto;
-                    }
-                    break;
-                case "ROLE":
-                    if (!CollectionUtils.isEmpty(rolesList) && rolesList.contains(hierarchy.getValue())) {
-                        dto = getApplicationList(MatchingIdentifier.ROLE.getValue(), hierarchy.getValue());
-                        return dto;
-                    }
-                    break;
-                case "DEFAULT":
-                    dto = getApplicationList(MatchingIdentifier.DEFAULT.getValue(), hierarchy.getValue());
-                    return dto;
+    private NavBarPermission handleMultipleAccountTypes(List<String> accountTypeList) {
+        NavBarPermission initialList = null;
+        NavBarPermission secondaryList = null;
+        List<String> availablePermissions = new ArrayList<>();
+        for (String singleAccountType : accountTypeList) {
+            if (initialList == null) {
+                initialList = getApplicationListWithMap(MatchingIdentifier.ACCOUNT_TYPE.getValue(), singleAccountType, availablePermissions);
+            } else {
+                NavBarPermission mergedList = initialList;
+                secondaryList = getApplicationListWithMap(MatchingIdentifier.ACCOUNT_TYPE.getValue(), singleAccountType, availablePermissions);
+                if (!ObjectUtils.isEmpty(initialList) && !CollectionUtils.isEmpty(initialList.getApplicationList()) && !ObjectUtils.isEmpty(secondaryList)) {
+                    secondaryList.getMapApplication().forEach(
+                            (key, value) ->
+                                    mergedList.getMapApplication().merge(key, value, (v1, v2) -> {
+                                                mergedList.getMapApplication().get(key).addAll(v2.stream().collect(Collectors.toList()));
+                                                return mergedList.getMapApplication().get(key);
+                                            }
+                                    ));
+                }
             }
         }
-        return dto;
-    }
+        if (initialList == null) {
+            initialList = getApplicationList(MatchingIdentifier.DEFAULT.getValue(), NavbarPermissionsConstants.DEFAULT_PERMISSIONS);
+            return initialList;
+        }
+        initialList.setMatchingIdentifier(MatchingIdentifier.ACCOUNT_TYPE.getValue());
+        var accountType = !CollectionUtils.isEmpty(availablePermissions) ? availablePermissions.stream().filter(type -> StringUtils.isNotBlank(type)).collect(Collectors.joining(",")) : "";
+        initialList.setMatcher(accountType);
+        List<Applications> applicationList = initialList.getMapApplication().entrySet()
+                .stream()
+                .map(link -> new Applications(link.getKey(), link.getValue()))
+                .collect(Collectors.toCollection(ArrayList::new));
 
+        initialList.setApplicationList(applicationList);
+        return initialList;
+    }
 
     public NavBarPermission getApplicationList(String matchingIdentifier, String matcher) {
         var navBarEntity = navbarEntityRepository.findByMatchingIdentifierAndMatcher(matchingIdentifier, matcher);
@@ -147,6 +157,21 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
             return objectMapper.convertValue(navBarEntity, NavBarPermission.class);
         } else {
             throw new GeneralizedException("No records available");
+        }
+    }
+
+    public NavBarPermission getApplicationListWithMap(String matchingIdentifier, String matcher, List<String> availablePermissions) {
+        var navBarEntity = navbarEntityRepository.findByMatchingIdentifierAndMatcher(matchingIdentifier, matcher);
+        if (!ObjectUtils.isEmpty(navBarEntity)) {
+            var navBarPermission = objectMapper.convertValue(navBarEntity, NavBarPermission.class);
+            Map<String, LinkedHashSet<String>> convertedMap = navBarPermission.getApplicationList().stream().
+                    collect(Collectors.toMap(Applications::getParent, Applications::getChildren,
+                            (parent, children) -> parent, LinkedHashMap::new));
+            navBarPermission.setMapApplication(convertedMap);
+            availablePermissions.add(matcher);
+            return navBarPermission;
+        } else {
+            return null;
         }
     }
 
