@@ -1,31 +1,39 @@
 package trimble.transportation.entitlements.navbar.permissions.service.impl;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
-import trimble.transportation.entitlements.navbar.permissions.config.ApplicationProperties;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import trimble.transportation.entitlements.navbar.permissions.constants.NavbarPermissionsConstants;
 import trimble.transportation.entitlements.navbar.permissions.dto.Applications;
-import trimble.transportation.entitlements.navbar.permissions.dto.Heirarchy;
 import trimble.transportation.entitlements.navbar.permissions.dto.NavBarPermission;
 import trimble.transportation.entitlements.navbar.permissions.dto.NavBarPermissionEntity;
 import trimble.transportation.entitlements.navbar.permissions.dto.enums.MatchingIdentifier;
-import trimble.transportation.entitlements.navbar.permissions.repositories.HeirarchyEntityRepository;
 import trimble.transportation.entitlements.navbar.permissions.repositories.NavbarEntityRepository;
 import trimble.transportation.entitlements.navbar.permissions.service.NavbarPermissionsService;
 import trimble.transportation.entitlements.navbar.permissions.utils.HttpService;
 import trimble.transportation.entitlements.navbar.permissions.utils.NavbarPermissionUtils;
 import trimble.transportation.entitlements.navbar.permissions.utils.exception.GeneralizedException;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,10 +42,6 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
     private final HttpService httpService;
 
     private final NavbarEntityRepository navbarEntityRepository;
-
-    private final HeirarchyEntityRepository heirarchyEntityRepository;
-
-    private final ApplicationProperties applicationProperties;
 
     private final ObjectMapper objectMapper;
 
@@ -173,15 +177,6 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
 
     public void deletePermission(String matchingIdentifier, String matcher) {
         navbarEntityRepository.deleteByMatchingIdentifierAndMatcher(matchingIdentifier, matcher);
-    }
-
-    private boolean canProceedMultipleAccountCheck(Heirarchy hierarchy, List<String> accountTypeList) {
-        for (String singleAccountType : hierarchy.getValue().split(",")) {
-            if (!accountTypeList.contains(singleAccountType)) {
-                return false;
-            }
-        }
-        return true;
     }
 
 }
