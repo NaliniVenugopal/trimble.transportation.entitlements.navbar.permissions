@@ -46,6 +46,6 @@ public class ControllerAdvice {
     }
 
     private String getShortExceptionMessage(Exception e) {
-        return StringUtils.substring(ExceptionUtils.getStackTrace(e), 0, 100);
+        return ExceptionUtils.getStackTrace(e);
     }
 }
