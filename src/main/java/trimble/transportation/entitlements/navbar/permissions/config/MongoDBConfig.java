@@ -11,10 +11,10 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 @Configuration
 public class MongoDBConfig {
 
-    private static final int MONGO_SOCKET_TIMEOUT = 5000;
+    private static final int MONGO_SOCKET_TIMEOUT = 30000;
     private static final int MONGO_CONNECT_TIMEOUT = 30000;
     private static final int MONGO_MAX_WAIT_TIME = 30000;
-    private static final int MONGO_SERVER_SELECTION_TIMEOUT = 10000;
+    private static final int MONGO_SERVER_SELECTION_TIMEOUT = 30000;
 
     @Value("${spring.data.mongodb.uri:}")
     private String mongoURI;
