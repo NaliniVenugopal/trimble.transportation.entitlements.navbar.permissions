@@ -21,6 +21,7 @@ public final class NavbarPermissionsConstants {
     public static final String BROKER = "BROKER";
 
     public static final String ACCOUNT_ID = "account_id";
+    public static final String USERID = "sub";
 
     public static final String ACCOUNT_TYPE = "ACCOUNT TYPE";
     public static final String ROLE_TYPE = "ROLE";
