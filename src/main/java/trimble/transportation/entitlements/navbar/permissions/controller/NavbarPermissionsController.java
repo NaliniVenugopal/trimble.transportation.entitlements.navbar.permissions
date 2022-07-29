@@ -36,10 +36,10 @@ public class NavbarPermissionsController {
     @GetMapping
     public ResponseEntity<Object> getNavigationBarValues(
             @RequestHeader(value = NavbarPermissionsConstants.X_CREDENTIAL_JWT, required = false) String jwtToken
-            //,@RequestHeader(value = "Authorization", required = false) String authorization
+            ,@RequestHeader(value = "Authorization", required = false) String authorization
     ) {
         log.info(" JWTToken " + jwtToken);
-        var navRefdto = navbarPermissionsService.constructNavigationMenu(jwtToken);
+        var navRefdto = navbarPermissionsService.constructNavigationMenu(jwtToken, authorization);
         return ResponseEntity.status(OK).body(navRefdto);
     }
 

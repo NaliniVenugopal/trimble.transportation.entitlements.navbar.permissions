@@ -9,7 +9,7 @@ public interface NavbarPermissionsService {
 
     NavBarPermission updateNavigationBarValues(NavBarPermission navBarPermission);
 
-    NavBarPermission constructNavigationMenu(String jwtToken);
+    NavBarPermission constructNavigationMenu(String jwtToken, String authorization);
 
     NavBarPermission getApplicationList(String matchingIdentifier, String matcher);
 
