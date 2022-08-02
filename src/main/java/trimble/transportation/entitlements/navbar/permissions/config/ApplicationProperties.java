@@ -8,12 +8,12 @@ import trimble.transportation.entitlements.navbar.permissions.dto.NavBarListDto;
 
 import java.util.List;
 
-@Component
-@ConfigurationProperties(prefix = "permission-values-db")
+//@Component
+//@ConfigurationProperties(prefix = "permission-values-db")
 @Data
 public class ApplicationProperties {
 
 
-    List<NavBarListDto> permissionValues;
+    //List<NavBarListDto> permissionValues;
     
 }

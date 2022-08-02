@@ -7,6 +7,6 @@ import lombok.Data;
 
 @Data
 public class NavBarListDto {
-    private String id;
+    private String permissionId;
     private List<String> permissionValues;
 }

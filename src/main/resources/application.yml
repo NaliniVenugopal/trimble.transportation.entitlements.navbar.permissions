@@ -3,7 +3,7 @@ spring:
     name: navbar-permissions-service
     version: @version@
   profiles:
-    active: local
+    active: prod
   data:
     mongodb:
       dbname: NavbarPermissionsDB
@@ -19,94 +19,6 @@ external:
   permissionServiceEndpoint : '#{"${IS_CONTAINER:false}".equals("true") ? "/api/v1/role/permissions/" : "/api/v1/manage/roles/permissions/"}'
   authorization:
 
-permissionValuesDb:
-  permissionValues:
-    -  
-     id: network_partners
-     permissionValues: 
-       - CRM_NetworkPartners
-       - CRM_NetworkPartnersV2
-       - CRM_NetworkPartnersV3
-    -
-     id: user_management
-     permissionValues:
-       - crm-v2-users
-    -
-     id: planning
-     permissionValues:
-       - Load Planning Domain
-    -
-     id: quote_details
-     permissionValues:
-       - QuoteService
-    -
-     id: shipment_detail
-     permissionValues:
-       - Load Planning Domain
-    -
-     id: order_details
-     permissionValues:
-       - Load Planning Domain       
-    -
-     id: accessorial_management
-     permissionValues:
-       - Accessorial
-    -
-     id: calendar
-     permissionValues:
-       - Load Planning Calendar
-    -
-     id: orphan_invoices
-     permissionValues:                               
-       - Financials App Service
-    -
-     id: all_transactions
-     permissionValues:                               
-       - Financials App Service
-    -
-     id: matching_rules
-     permissionValues:                               
-       - Financials App Service
-    -
-     id: audit_tolerance
-     permissionValues:                               
-       - Financials App Service
-    -
-     id: reporting
-     permissionValues:                               
-       - ReportingAPI
-    -
-     id: carrier-procurement
-     permissionValues:                               
-       - Operations Tender Service
-    -
-     id: carrier-tracking
-     permissionValues:                               
-       - Trailer-Tracking
-    -
-     id: equipment
-     permissionValues:                               
-       - Equipment-Types-Application-Service
-    -
-     id: handling_units_packages
-     permissionValues:                               
-       - handlingunits
-    -
-     id: product_catalog
-     permissionValues:                               
-       - Products
-    -
-     id: integration_hub
-     permissionValues:                               
-       - IntegrationHUBAPI
-    -
-     id: reference_management
-     permissionValues:                               
-       - CoreReferenceManagementService
-    -
-     id: service_level_management
-     permissionValues:                               
-       - ServiceLevelsAPI                                
 ---
 spring:
   config:
