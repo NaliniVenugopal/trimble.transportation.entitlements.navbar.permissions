@@ -124,6 +124,7 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
     private NavBarPermission constructNavBarByPermissions(List<String> accountTypeList, String userId, String jwtToken) {
         var navBarPermission = handleMultipleAccountTypes(accountTypeList);
         List<PermissionResponse> permissionsRespTTC = getPermissionResponses(userId, jwtToken);
+        var permissionList = navBarListEntityRepository.findAll();
 
         for (Iterator<Applications> iteratorParent = navBarPermission.getApplicationList().iterator(); iteratorParent.hasNext(); ) {
             Applications accountTypeNavBarLink = iteratorParent.next();
@@ -134,7 +135,7 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
                 for (Iterator<String> iterator = accountTypeNavBarLink.getChildren().iterator(); iterator.hasNext(); ) {
                     String child = iterator.next();
 //                    Optional<NavBarListDto> permissionValues = permissionsNavBarMDM.getPermissionValues().stream().filter(mdm -> mdm.getId().equals(child)).findFirst();
-                    var permissionValues = navBarListEntityRepository.findAll().stream().filter(mdm -> mdm.getPermissionId().equals(child)).findFirst();
+                    var permissionValues = permissionList.stream().filter(mdm -> mdm.getPermissionId().equals(child)).findFirst();
                     if (permissionValues.isPresent()) {
                         List<String> ttcResourceNamesConfigured = permissionValues.get().getPermissionValues();
                         boolean permissionPresent = permissionsRespTTC.stream().anyMatch(ttcAssignedPermissions ->
