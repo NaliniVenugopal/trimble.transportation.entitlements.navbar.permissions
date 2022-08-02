@@ -13,9 +13,12 @@ spring:
 external:
   accountServiceUrl: '#{"${IS_CONTAINER:false}".equals("true") ? "http://tcx-accountappservice" : "https://cloud.dev.api.trimblecloud.com/transportation"}'
   accountServiceEndpoint: /api/core/v2/accounts/
+  userServiceUrl: '#{"${IS_CONTAINER:false}".equals("true") ? "http://tcx-iamuserapp" : "https://cloud.dev.api.trimblecloud.com/transportation"}'
+  userServiceEndpoint : /iam/v2/users/
+  permissionServiceUrl: '#{"${IS_CONTAINER:false}".equals("true") ? "http://tcx-permissionservice" : "https://cloud.dev.api.trimblecloud.com/transportation"}'
+  permissionServiceEndpoint : '#{"${IS_CONTAINER:false}".equals("true") ? "/api/v1/role/permissions/" : "/api/v1/manage/roles/permissions/"}'
   authorization:
 
-       
 ---
 spring:
   config:

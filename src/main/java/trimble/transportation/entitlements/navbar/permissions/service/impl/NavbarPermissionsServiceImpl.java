@@ -1,9 +1,10 @@
 package trimble.transportation.entitlements.navbar.permissions.service.impl;
 
+
+
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
-import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -14,27 +15,35 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import trimble.transportation.entitlements.navbar.permissions.constants.NavbarPermissionsConstants;
 import trimble.transportation.entitlements.navbar.permissions.dto.Applications;
+import trimble.transportation.entitlements.navbar.permissions.dto.NavBarListEntity;
 import trimble.transportation.entitlements.navbar.permissions.dto.NavBarPermission;
 import trimble.transportation.entitlements.navbar.permissions.dto.NavBarPermissionEntity;
+import trimble.transportation.entitlements.navbar.permissions.dto.PermissionResponse;
+import trimble.transportation.entitlements.navbar.permissions.dto.UserPermission;
 import trimble.transportation.entitlements.navbar.permissions.dto.enums.MatchingIdentifier;
+import trimble.transportation.entitlements.navbar.permissions.repositories.NavBarListEntityRepository;
 import trimble.transportation.entitlements.navbar.permissions.repositories.NavbarEntityRepository;
 import trimble.transportation.entitlements.navbar.permissions.service.NavbarPermissionsService;
 import trimble.transportation.entitlements.navbar.permissions.utils.HttpService;
 import trimble.transportation.entitlements.navbar.permissions.utils.NavbarPermissionUtils;
 import trimble.transportation.entitlements.navbar.permissions.utils.exception.GeneralizedException;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
@@ -50,11 +59,22 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
 
     @Value("${external.accountServiceEndpoint}")
     private String accountServiceEndpoint;
+    
+    @Value("${external.userServiceUrl}")
+    private String userServiceUrl;
 
-    @Value("${external.authorization}")
-    private String authorization;
+    @Value("${external.userServiceEndpoint}")
+    private String userServiceEndpoint;
+    
+    
+    @Value("${external.permissionServiceUrl}")
+    private String permissionServiceUrl;
 
-
+    @Value("${external.permissionServiceEndpoint}")
+    private String permissionServiceEndpoint;
+    
+    private final NavBarListEntityRepository navBarListEntityRepository;
+    
     public NavBarPermission postNavigationBarValues(NavBarPermission navBarPermission) {
         var navBarEntity = navbarEntityRepository.findByMatchingIdentifierAndMatcher(navBarPermission.getMatchingIdentifier(), navBarPermission.getMatcher());
         if (!ObjectUtils.isEmpty(navBarEntity)) {
@@ -87,33 +107,76 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
     }
 
     @SneakyThrows
-    public NavBarPermission constructNavigationMenu(String jwtToken) {
+    public NavBarPermission constructNavigationMenu(String jwtToken, boolean filterByTTCPerms) {
         String[] tokenChunks = jwtToken.split("\\.");
         var decoder = Base64.getDecoder();
         String payload = new String(decoder.decode(tokenChunks[1]));
         JSONObject jwtJson = new JSONObject(payload);
         var accountId = (String) jwtJson.get(NavbarPermissionsConstants.ACCOUNT_ID);
-        Object roles = null;
-        List<String> rolesList = null;
-        //Check if roles is there as only for identity_user "USER" roles will be there. For ClientCredentials it will not be there
-        if (jwtJson.has("roles")) {
-            roles = jwtJson.get("roles");
-            rolesList = new ObjectMapper().readValue(roles.toString(), new TypeReference<List<String>>() {
-            });
-        }
-        Map<String, String> headers = new HashMap<>();
+        var userId = (String) jwtJson.get(NavbarPermissionsConstants.USERID);
         var url = NavbarPermissionUtils.concatStrings(accountServiceUrl, accountServiceEndpoint, accountId);
-        headers.put("x-credential-jwt", jwtToken);
-        headers.put("Content-Type", "application/json");
-        //Comment before commit
-//        headers.put("Authorization", "Bearer " + authorization);
-        JSONObject accountJson = new JSONObject(httpService.getEntity(url, headers, String.class).getResponseBody());
+        JSONObject accountJson = new JSONObject(httpService.getEntity(url, NavbarPermissionUtils.constructHeaders("Account",jwtToken,""), String.class).getResponseBody());
         var accountTypes = accountJson.get("accountTypes");
         var accountTypeList = new ObjectMapper().readValue(accountTypes.toString(), new TypeReference<List<String>>() {
         });
-        return handleMultipleAccountTypes(accountTypeList);
+        return !filterByTTCPerms ? handleMultipleAccountTypes(accountTypeList) : constructNavBarByPermissions(accountTypeList,userId,jwtToken);
     }
-
+    
+    @SneakyThrows
+    private NavBarPermission constructNavBarByPermissions(List<String> accountTypeList, String userId, String jwtToken) {
+    	 NavBarPermission navBarPermission = handleMultipleAccountTypes(accountTypeList);
+    	 List<PermissionResponse> permissionsRespTTC = getPermissionResponses(userId, jwtToken);
+    	 var permissionList = navBarListEntityRepository.findAll();
+    	 for (Iterator<Applications> iteratorParent = navBarPermission.getApplicationList().iterator(); iteratorParent.hasNext();) {
+        	 Applications accountTypeNavBarLink = iteratorParent.next();
+        	 boolean isParentNodeOnly = false;
+        	 if(accountTypeNavBarLink.getChildren().isEmpty())
+        		 isParentNodeOnly = true;
+        	 if(!isParentNodeOnly) {
+		        	 for (Iterator<String> iterator = accountTypeNavBarLink.getChildren().iterator(); iterator.hasNext();) {
+		        		 	String child = iterator.next();
+		        		 	var permissionValues = permissionList.stream().filter(mdm -> mdm.getPermissionId().equals(child)).findFirst();
+		        		 	if(permissionValues.isPresent()) {
+		        				List<String> ttcResourceNamesConfigured = permissionValues.get().getPermissionValues();
+		        				boolean permissionPresent = permissionsRespTTC.stream().anyMatch(ttcAssignedPermissions -> 
+		        														ttcResourceNamesConfigured.contains(ttcAssignedPermissions.getResource_name())
+		        											);
+		        				if(!permissionPresent) {
+		        					//System.out.println(" PERMISSION NOT CONFIGURED FOR THE CHILD "+child);
+		        					iterator.remove();
+		        				}else {
+		        					//Permission is available for child
+		        				}
+		        			}else {
+		        				//System.out.println(" NO RESOURCE CONFIGURED FOR THE CHILD "+child);
+		        				iterator.remove();
+		        			}
+		        	 }
+		        	 if(accountTypeNavBarLink.getChildren().isEmpty())
+		        		 iteratorParent.remove();
+        	 }else {
+	        		 String parentId = accountTypeNavBarLink.getParent();
+	        		 var permissionValues = permissionList.stream().filter(mdm -> mdm.getPermissionId().equals(parentId)).findFirst();
+	        		 if(permissionValues.isPresent()){
+	     				List<String> ttcResourceNamesConfigured =  permissionValues.get().getPermissionValues();
+	     				boolean permissionPresent = permissionsRespTTC.stream().anyMatch(ttcAssignedPermissions -> 
+	     											ttcResourceNamesConfigured.contains(ttcAssignedPermissions.getResource_name()));
+	     				if(!permissionPresent) {
+	     					//log.info(" PERMISSION NOT CONFIGURED FOR THE PARENT "+parentId);
+	     					iteratorParent.remove();
+	     				}else {
+	     					//Permission is available for Parent
+	     				}
+	     			}else {
+	     				//log.info(" NO RESOURCE CONFIGURED FOR THE PARENT "+parentId);
+	     				iteratorParent.remove();
+	     			}
+        	 }
+         };
+        NavbarPermissionUtils.validateDefaultUrl(navBarPermission); 
+    	return navBarPermission;
+    }
+    
     private NavBarPermission handleMultipleAccountTypes(List<String> accountTypeList) {
         NavBarPermission initialList = null;
         NavBarPermission secondaryList = null;
@@ -177,6 +240,18 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
 
     public void deletePermission(String matchingIdentifier, String matcher) {
         navbarEntityRepository.deleteByMatchingIdentifierAndMatcher(matchingIdentifier, matcher);
+    }
+    
+    private List<PermissionResponse> getPermissionResponses(String userId, String jwtToken) throws JSONException, JsonProcessingException {
+        var url = NavbarPermissionUtils.concatStrings(userServiceUrl, userServiceEndpoint, userId);
+        JSONObject userJson = new JSONObject(httpService.getEntity(url, NavbarPermissionUtils.constructHeaders("Users", jwtToken, ""), String.class).getResponseBody());
+        var accountObjectId = (String) userJson.get("accountObjectId");
+        List<UserPermission> userPermission = new ObjectMapper().readValue(userJson.get("roles").toString(), new TypeReference<List<UserPermission>>() {
+        });
+        List<String> objectIds = userPermission.stream().map(x -> x.getObjectId()).collect(Collectors.toList());
+        url = NavbarPermissionUtils.concatStrings(permissionServiceUrl, permissionServiceEndpoint, "?filter=true");
+        List<PermissionResponse> permissionsRespTTC = httpService.postEntityList(url, NavbarPermissionUtils.constructHeaders("Permissions", jwtToken, accountObjectId), objectIds, PermissionResponse.class).getResponseBodyList();
+        return permissionsRespTTC;
     }
 
 }
