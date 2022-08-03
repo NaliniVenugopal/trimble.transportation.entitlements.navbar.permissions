@@ -11,17 +11,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -30,7 +30,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import trimble.transportation.entitlements.navbar.permissions.constants.NavbarPermissionsConstants;
 import trimble.transportation.entitlements.navbar.permissions.dto.Applications;
-import trimble.transportation.entitlements.navbar.permissions.dto.NavBarListEntity;
 import trimble.transportation.entitlements.navbar.permissions.dto.NavBarPermission;
 import trimble.transportation.entitlements.navbar.permissions.dto.NavBarPermissionEntity;
 import trimble.transportation.entitlements.navbar.permissions.dto.PermissionResponse;
@@ -114,18 +113,23 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
         JSONObject jwtJson = new JSONObject(payload);
         var accountId = (String) jwtJson.get(NavbarPermissionsConstants.ACCOUNT_ID);
         var userId = (String) jwtJson.get(NavbarPermissionsConstants.USERID);
+        //Non Blocking 
+        Future<List<PermissionResponse>> ttcPermissions = null;
+        if(filterByTTCPerms)
+        	ttcPermissions = calculatePermissionAsync(userId, jwtToken);
+        
         var url = NavbarPermissionUtils.concatStrings(accountServiceUrl, accountServiceEndpoint, accountId);
         JSONObject accountJson = new JSONObject(httpService.getEntity(url, NavbarPermissionUtils.constructHeaders("Account",jwtToken,""), String.class).getResponseBody());
         var accountTypes = accountJson.get("accountTypes");
         var accountTypeList = new ObjectMapper().readValue(accountTypes.toString(), new TypeReference<List<String>>() {
         });
-        return !filterByTTCPerms ? handleMultipleAccountTypes(accountTypeList) : constructNavBarByPermissions(accountTypeList,userId,jwtToken);
+        return !filterByTTCPerms ? handleMultipleAccountTypes(accountTypeList) : constructNavBarByPermissions(accountTypeList,userId,jwtToken,ttcPermissions);
     }
     
     @SneakyThrows
-    private NavBarPermission constructNavBarByPermissions(List<String> accountTypeList, String userId, String jwtToken) {
+    private NavBarPermission constructNavBarByPermissions(List<String> accountTypeList, String userId, String jwtToken, Future<List<PermissionResponse>> ttcPermissions) {
     	 NavBarPermission navBarPermission = handleMultipleAccountTypes(accountTypeList);
-    	 List<PermissionResponse> permissionsRespTTC = getPermissionResponses(userId, jwtToken);
+    	 List<PermissionResponse> permissionsRespTTC = ttcPermissions.get();//  getPermissionResponses(userId, jwtToken);
     	 var permissionList = navBarListEntityRepository.findAll();
     	 for (Iterator<Applications> iteratorParent = navBarPermission.getApplicationList().iterator(); iteratorParent.hasNext();) {
         	 Applications accountTypeNavBarLink = iteratorParent.next();
@@ -242,7 +246,8 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
         navbarEntityRepository.deleteByMatchingIdentifierAndMatcher(matchingIdentifier, matcher);
     }
     
-    private List<PermissionResponse> getPermissionResponses(String userId, String jwtToken) throws JSONException, JsonProcessingException {
+    @SneakyThrows
+    private List<PermissionResponse> getPermissionResponses(String userId, String jwtToken){
         var url = NavbarPermissionUtils.concatStrings(userServiceUrl, userServiceEndpoint, userId);
         JSONObject userJson = new JSONObject(httpService.getEntity(url, NavbarPermissionUtils.constructHeaders("Users", jwtToken, ""), String.class).getResponseBody());
         var accountObjectId = (String) userJson.get("accountObjectId");
@@ -252,6 +257,11 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
         url = NavbarPermissionUtils.concatStrings(permissionServiceUrl, permissionServiceEndpoint, "?filter=true");
         List<PermissionResponse> permissionsRespTTC = httpService.postEntityList(url, NavbarPermissionUtils.constructHeaders("Permissions", jwtToken, accountObjectId), objectIds, PermissionResponse.class).getResponseBodyList();
         return permissionsRespTTC;
+    }
+    
+    @SneakyThrows
+    public Future<List<PermissionResponse>> calculatePermissionAsync(String userId, String jwtToken) throws InterruptedException {
+        return CompletableFuture.supplyAsync(() ->  getPermissionResponses(userId, jwtToken));
     }
 
 }
