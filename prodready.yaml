@@ -1,0 +1,134 @@
+questions:
+  - question: Do you have monitoring configured for your service?
+    description: ""
+    answer: true
+    links: "https://trimble-tcx.datadoghq.com/monitors/79127394"
+    exception: false
+    exceptionRef: ""
+    notApplicable: false
+  - question: Do you have alerts set for these monitors?
+    description: ""
+    answer: true
+    links: "https://trimble-tcx.datadoghq.com/monitors/79127394"
+    exception: false
+    exceptionRef: ""
+    notApplicable: false
+  - question: Do you have runbooks for the service alerts?
+    description: ""
+    answer: true
+    links: "https://confluence.trimble.tools/display/TTMTCX/TCX+-+EntitlementsNavbarPermissionsService"
+    exception: false
+    exceptionRef: ""
+    notApplicable: false
+  - question: Were your runbooks reviewed by xOPS / SRE?
+    description: ""
+    answer: true
+    links: ""
+    exception: false
+    exceptionRef: ""
+    notApplicable: false
+  - question: Have you reviewed the NOC L2 service onboarding guidance here Service Onboarding [https://confluence.trimble.tools/display/PNETTECH/Service+Onboarding]?
+    description: ""
+    answer: true
+    links: ""
+    exception: false
+    exceptionRef: ""
+    notApplicable: false
+  - question: Have you completed NOC L2 service onboarding per the guidance here Service Onboarding [https://confluence.trimble.tools/display/PNETTECH/Service+Onboarding]?
+    description: ""
+    answer: true
+    links: ""
+    exception: false
+    exceptionRef: ""
+    notApplicable: false
+  - question: Is your team prepared to have alerts and runbooks approved as they are created and maintained on an ongoing basis?
+    description: ""
+    answer: true
+    links: ""
+    exception: false
+    exceptionRef: ""
+    notApplicable: false
+  - question: Have you created a freshservice change request for deployment?
+    description: ""
+    answer: true
+    links: "https://confluence.trimble.tools/display/PNETTECH/Requesting+a+Change"
+    exception: false
+    exceptionRef: ""
+    notApplicable: false
+  - question: Have you been trained on freshservice?
+    description: "All teams using the change management system need workflows added to fresh service."
+    answer: true
+    links: "https://confluence.trimble.tools/display/PNETTECH/TTM+Migration+Status"
+    exception: false
+    exceptionRef: ""
+    notApplicable: false
+  - question: Integration to change management readiness score/checklist
+    description: ""
+    answer: true
+    links: ""
+    exception: false
+    exceptionRef: ""
+    notApplicable: false
+  - question: Is your service directly customer facing?
+    description: "needs confluence page"
+    answer: true
+    links: ""
+    exception: false
+    exceptionRef: ""
+    notApplicable: false
+  - question: Has your service been added to Statuspage for visibility
+    description: "needs confluence page"
+    answer: true
+    links: ""
+    exception: false
+    exceptionRef: ""
+    notApplicable: false
+  - question: Is escalation path defined?
+    description: "https://confluence.trimble.tools/display/PNETTECH/Requesting+a+Change"
+    answer: true
+    links: ""
+    exception: false
+    exceptionRef: ""
+    notApplicable: false
+  - question: Alerting - with incident
+    description: "Ensure alerts that are incident worthy are created and clearly define the issue/remediation"
+    answer: true
+    links: "https://confluence.trimble.tools/display/PNETTECH/Alerting+Requirementss"
+    exception: false
+    exceptionRef: ""
+    notApplicable: false
+  - question: Components for status page
+    description: "List of components/grouping for status page"
+    answer: true
+    links: "https://confluence.trimble.tools/display/PNETTECH/Status+Page+Requirements"
+    exception: false
+    exceptionRef: ""
+    notApplicable: false
+  - question: Dependencies
+    description: "Are there customer-facing services that rely on this service?Â Does this service rely on others"
+    answer: true
+    links: ""
+    exception: false
+    exceptionRef: ""
+    notApplicable: false
+  - question: Templates
+    description: "Templates for status page created for any alerts and potential issues"
+    answer: true
+    links: "https://confluence.trimble.tools/display/PNETTECH/Template+Requirements"
+    exception: false
+    exceptionRef: ""
+    notApplicable: false
+  - question: Marketing messaging signed off
+    description: "Any public alerts/status needs to be signed off for marketing"
+    answer: false
+    links: "https://confluence.trimble.tools/display/PNETTECH/Marketing+Requirements"
+    exception: false
+    exceptionRef: ""
+    notApplicable: false
+  - question: Victorops
+    description: "Setup Victorops if any custom alerting is needed"
+    answer: false
+    links: ""
+    exception: false
+    exceptionRef: ""
+    notApplicable: false
