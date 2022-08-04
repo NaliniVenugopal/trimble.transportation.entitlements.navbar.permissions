@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -124,59 +125,78 @@ public class NavbarPermissionsServiceImpl implements NavbarPermissionsService {
     
     @SneakyThrows
     private NavBarPermission constructNavBarByPermissions(List<String> accountTypeList, String userId, String jwtToken) {
-    	 NavBarPermission navBarPermission = handleMultipleAccountTypes(accountTypeList);
-    	 List<PermissionResponse> permissionsRespTTC = getPermissionResponses(userId, jwtToken);
-    	 var permissionList = navBarListEntityRepository.findAll();
-    	 for (Iterator<Applications> iteratorParent = navBarPermission.getApplicationList().iterator(); iteratorParent.hasNext();) {
-        	 Applications accountTypeNavBarLink = iteratorParent.next();
-        	 boolean isParentNodeOnly = false;
-        	 if(accountTypeNavBarLink.getChildren().isEmpty())
-        		 isParentNodeOnly = true;
-        	 if(!isParentNodeOnly) {
-		        	 for (Iterator<String> iterator = accountTypeNavBarLink.getChildren().iterator(); iterator.hasNext();) {
-		        		 	String child = iterator.next();
-		        		 	var permissionValues = permissionList.stream().filter(mdm -> mdm.getPermissionId().equals(child)).findFirst();
-		        		 	if(permissionValues.isPresent()) {
-		        				List<String> ttcResourceNamesConfigured = permissionValues.get().getPermissionValues();
-		        				boolean permissionPresent = permissionsRespTTC.stream().anyMatch(ttcAssignedPermissions -> 
-		        														ttcResourceNamesConfigured.contains(ttcAssignedPermissions.getResource_name())
-		        											);
-		        				if(!permissionPresent) {
-		        					//System.out.println(" PERMISSION NOT CONFIGURED FOR THE CHILD "+child);
-		        					iterator.remove();
-		        				}else {
-		        					//Permission is available for child
-		        				}
-		        			}else {
-		        				//System.out.println(" NO RESOURCE CONFIGURED FOR THE CHILD "+child);
-		        				iterator.remove();
-		        			}
-		        	 }
-		        	 if(accountTypeNavBarLink.getChildren().isEmpty())
-		        		 iteratorParent.remove();
-        	 }else {
-	        		 String parentId = accountTypeNavBarLink.getParent();
-	        		 var permissionValues = permissionList.stream().filter(mdm -> mdm.getPermissionId().equals(parentId)).findFirst();
-	        		 if(permissionValues.isPresent()){
-	     				List<String> ttcResourceNamesConfigured =  permissionValues.get().getPermissionValues();
-	     				boolean permissionPresent = permissionsRespTTC.stream().anyMatch(ttcAssignedPermissions -> 
-	     											ttcResourceNamesConfigured.contains(ttcAssignedPermissions.getResource_name()));
-	     				if(!permissionPresent) {
-	     					//log.info(" PERMISSION NOT CONFIGURED FOR THE PARENT "+parentId);
-	     					iteratorParent.remove();
-	     				}else {
-	     					//Permission is available for Parent
-	     				}
-	     			}else {
-	     				//log.info(" NO RESOURCE CONFIGURED FOR THE PARENT "+parentId);
-	     				iteratorParent.remove();
-	     			}
-        	 }
-         };
-        NavbarPermissionUtils.validateDefaultUrl(navBarPermission); 
-    	return navBarPermission;
+        CompletableFuture<NavBarPermission> completableFutureNavBarPermission
+                = CompletableFuture.supplyAsync(() -> handleMultipleAccountTypes(accountTypeList))
+                .thenCombine(CompletableFuture.supplyAsync(
+                        () -> {
+                            try {
+                                return getPermissionResponses(userId, jwtToken);
+                            } catch (JSONException e) {
+                                throw new RuntimeException(e);
+                            } catch (JsonProcessingException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }), (navBarPermission, permissionsRespTTC) -> getAllowedNavBarPermission(navBarPermission ,permissionsRespTTC));
+
+//    	 NavBarPermission navBarPermission = handleMultipleAccountTypes(accountTypeList);
+//    	 List<PermissionResponse> permissionsRespTTC = getPermissionResponses(userId, jwtToken);
+//        var navBarPermission= getAllowedNavBarPermission(navBarPermission, permissionsRespTTC);
+        return completableFutureNavBarPermission.get();
     }
-    
+
+    private NavBarPermission getAllowedNavBarPermission(NavBarPermission navBarPermission, List<PermissionResponse> permissionsRespTTC) {
+        var permissionList = navBarListEntityRepository.findAll();
+        for (Iterator<Applications> iteratorParent = navBarPermission.getApplicationList().iterator(); iteratorParent.hasNext();) {
+            Applications accountTypeNavBarLink = iteratorParent.next();
+            boolean isParentNodeOnly = false;
+            if(accountTypeNavBarLink.getChildren().isEmpty())
+                isParentNodeOnly = true;
+            if(!isParentNodeOnly) {
+                    for (Iterator<String> iterator = accountTypeNavBarLink.getChildren().iterator(); iterator.hasNext();) {
+                            String child = iterator.next();
+                            var permissionValues = permissionList.stream().filter(mdm -> mdm.getPermissionId().equals(child)).findFirst();
+                            if(permissionValues.isPresent()) {
+                               List<String> ttcResourceNamesConfigured = permissionValues.get().getPermissionValues();
+                               boolean permissionPresent = permissionsRespTTC.stream().anyMatch(ttcAssignedPermissions ->
+                                                                       ttcResourceNamesConfigured.contains(ttcAssignedPermissions.getResource_name())
+                                                           );
+                               if(!permissionPresent) {
+                                   //System.out.println(" PERMISSION NOT CONFIGURED FOR THE CHILD "+child);
+                                   iterator.remove();
+                               }else {
+                                   //Permission is available for child
+                               }
+                           }else {
+                               //System.out.println(" NO RESOURCE CONFIGURED FOR THE CHILD "+child);
+                               iterator.remove();
+                           }
+                    }
+                    if(accountTypeNavBarLink.getChildren().isEmpty())
+                        iteratorParent.remove();
+            }else {
+                    String parentId = accountTypeNavBarLink.getParent();
+                    var permissionValues = permissionList.stream().filter(mdm -> mdm.getPermissionId().equals(parentId)).findFirst();
+                    if(permissionValues.isPresent()){
+                        List<String> ttcResourceNamesConfigured =  permissionValues.get().getPermissionValues();
+                        boolean permissionPresent = permissionsRespTTC.stream().anyMatch(ttcAssignedPermissions ->
+                                                    ttcResourceNamesConfigured.contains(ttcAssignedPermissions.getResource_name()));
+                        if(!permissionPresent) {
+                            //log.info(" PERMISSION NOT CONFIGURED FOR THE PARENT "+parentId);
+                            iteratorParent.remove();
+                        }else {
+                            //Permission is available for Parent
+                        }
+                    }else {
+                        //log.info(" NO RESOURCE CONFIGURED FOR THE PARENT "+parentId);
+                        iteratorParent.remove();
+                    }
+            }
+}
+        ;
+        NavbarPermissionUtils.validateDefaultUrl(navBarPermission);
+        return navBarPermission;
+    }
+
     private NavBarPermission handleMultipleAccountTypes(List<String> accountTypeList) {
         NavBarPermission initialList = null;
         NavBarPermission secondaryList = null;
