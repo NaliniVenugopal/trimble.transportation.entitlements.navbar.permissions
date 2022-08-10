@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import org.apache.commons.lang3.ObjectUtils;
+
 import trimble.transportation.entitlements.navbar.permissions.dto.NavBarPermission;
 
 public class NavbarPermissionUtils {
@@ -21,7 +23,7 @@ public class NavbarPermissionUtils {
     	Map<String, String> headers = new HashMap<>();
     	headers.put("x-credential-jwt", jwtToken);
 	    headers.put("Content-Type", "application/json");	
-	    //headers.put("Authorization", "Bearer eyJraWQiOiJmYjgyNzZhYi1jMzU5LTQ1MDctYjIxNS00OWZhMzVhMjRkODQiLCJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiI4ZGM1YTI3ZS03MjYxLTQ3NjktODI5My1hYTEwNTkyMzc3MWYiLCJ2ZXIiOiIxLjAiLCJpc3MiOiJodHRwczovL2FwaS5kZXYudHJpbWJsZS10cmFuc3BvcnRhdGlvbi5jb20iLCJhY2NvdW50X2lkIjoiYjY0MTc0M2MtNDY5Zi00YmUzLWI1MDMtYTZmYTgxMGI0MWVlIiwibmJmIjoxNjU5NDYwNTk5LCJhenAiOiIzNTQyMzU3ZTI0YzQ1OTcyMTlEODk1RUFBRmU5OGY3Iiwic2t1X2lkcyI6W10sImFjY291bnRfbmFtZSI6Ikt1ZWJpeCBTaGlwbWVudCBFbnRyeSIsIm5hbWUiOiJTaGlwbWVudCBFbnRyeSBGbG93IiwiaWRlbnRpdHlfdHlwZSI6ImFwcGxpY2F0aW9uIiwiZXhwIjoxNjU5NDY0MTk5LCJpYXQiOjE2NTk0NjA1OTksImp0aSI6ImY2NzU2M2Y3LTI3NzQtNGY3My1hMTJhLWVjZDNmNjk2MTljYyJ9.KiN_45WrtptyUojXYflEspWAz-u2ZsnQUhleTpFE_ETUewHHWBc-phL7NqaGPCBokDqmsLtM29Z3vocCQRAfKRdsgG4FsSqXmT-xtMB-bVNAOc7QRrMaGaUsHT_d2ZS5QOEQ4zC7FNrK6GPg531mD_boG0pMDbrwNJIW0gmL3PxmEgrkNTOnwrFGTqbOVZiheW1meHFVQB_49buCE9209jIjS4Ufsvy6LZjJCCWdHTOnHz2B-joGHkL_HJAJWNcuD6B1ouElNWnYV87Fwi1wWCM8wvB3UjxCXJ4vu9LEPynXb2HW-PhAw9rAeQG137q5-R5P1gDVLW_NQPtKjUsKlg");
+	    //headers.put("Authorization", "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IjEifQ.eyJpc3MiOiJodHRwczovL3N0YWdlLmlkLnRyaW1ibGVjbG91ZC5jb20iLCJleHAiOjE2NjAxMzA3ODEsIm5iZiI6MTY2MDEyNzE4MSwiaWF0IjoxNjYwMTI3MTgxLCJqdGkiOiJiMGI0MTZlMzBhN2U0YjIyYWI3MmIxNjNhNWFkYmIzMiIsImp3dF92ZXIiOjIsInN1YiI6ImI4OTM0MjA0LTdmN2EtNDk1Yy1iY2Q0LWQwYmEyMTI0NzE3MSIsImlkZW50aXR5X3R5cGUiOiJ1c2VyIiwiYW1yIjpbImZlZGVyYXRlZCIsIm9rdGFfdHJpbWJsZSIsIm1mYSJdLCJhdXRoX3RpbWUiOjE2NjAxMjcxNzksImF6cCI6ImY0OTBjZWMwLTIxNmItNDZhYi1iYjJkLTg2MTAwMjhhMzdjYyIsImF1ZCI6WyJmNDkwY2VjMC0yMTZiLTQ2YWItYmIyZC04NjEwMDI4YTM3Y2MiXSwic2NvcGUiOiJ0bXMtZGV2In0.EbB6GxbU-2KxUoI-3FnmFbHoi1zTlluTESQT26pEpjq4nKaiwoKhZdNirbyirDLkrOCCyrEJzEgyp_wxUT0sZtuGPBpq6Y6n9e4lebcgam_R6hKB7ejUqDoY1_LTkDeo2JFx6gqA0Ty-810G2fcT9KRMgWOa04gbNU6cyfrTTsML_KQagesfvU3cRems_XJpeUVMkgL5WqN0pMOaAutXFCvZ76Ea-0QyL1izCBuBKoOod1XDpa3xQfho8CCyi3nzkEceEFKHOY9RJilc-hXnVqE02PoHwEFhi-DePDrCjAPKMNhXYm4kcGG5E3IPzbnApYlBS4jFvf8aCmGstlXf0g");
         switch(apiCase) {
     	  case "Account":
     	  case "Users":	  
@@ -35,17 +37,19 @@ public class NavbarPermissionUtils {
     
     public static  void validateDefaultUrl(NavBarPermission navBarPermission) {
     	boolean isAppropriateDefaultUrl = false;
-    	switch(navBarPermission.getDefaultURL()) {
-			case "/#/planning":
-				isAppropriateDefaultUrl = navBarPermission.getMapApplication().get("operations").contains("planning");
-				break;
-			case "/#/waterfall-tendering":
-				isAppropriateDefaultUrl = navBarPermission.getMapApplication().get("tendering").contains("tendering");
-				break;
-			case "/#/carrier-tracking":
-				isAppropriateDefaultUrl = navBarPermission.getMapApplication().get("operations").contains("carrier-tracking");
-				break;
-		}
+    	if(ObjectUtils.isNotEmpty(navBarPermission.getMapApplication())){
+	    	switch(navBarPermission.getDefaultURL()) {
+				case "/#/planning":
+					isAppropriateDefaultUrl = navBarPermission.getMapApplication().get("operations") != null ? navBarPermission.getMapApplication().get("operations").contains("planning") : false;
+					break;
+				case "/#/waterfall-tendering":
+					isAppropriateDefaultUrl = navBarPermission.getMapApplication().get("tendering") != null ? navBarPermission.getMapApplication().get("tendering").contains("tendering") : false;
+					break;
+				case "/#/carrier-tracking":
+					isAppropriateDefaultUrl = navBarPermission.getMapApplication().get("operations") != null ? navBarPermission.getMapApplication().get("operations").contains("carrier-tracking") : false;
+					break;
+			}
+    	}
     	if(!isAppropriateDefaultUrl)
     		navBarPermission.setDefaultURL("");
     }
