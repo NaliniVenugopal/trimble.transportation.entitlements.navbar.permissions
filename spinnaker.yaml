@@ -10,10 +10,10 @@ spec:
   team: tcx-kuebix
   contacts:
     productOwners:
-    - gokulnath_raghavan@trimble.com
+      - gokulnath_raghavan@trimble.com
     technicalContacts:
-    - thirumaniraj_rr@trimble.com
-    - mothi_sampath@trimble.com
+      - thirumaniraj_rr@trimble.com
+      - mothi_sampath@trimble.com
   description: |-
     Describe your service here. This description will be accessible in the Spinnaker application object.
   # If a spinnaker application is manged, the spinnaker operator will lock the pipelines it creates so they cannot be updated within the spinnaker UI and keep them in sync with this YAML file.
@@ -38,15 +38,15 @@ spec:
       - tcx-lower
       - tcx-prod
       - tcx-docker-registry
-   # Enabling deployCrd will create a pipeline in this application that deploys this CRD onto the cluster hosting the spinnaker operator. 
+      # Enabling deployCrd will create a pipeline in this application that deploys this CRD onto the cluster hosting the spinnaker operator. 
   deployCrd:
     # When set to false this will delete the deploy crd pipeline if it exists
     enabled: true
     # The location of this CRD. It is recommended this be located within the application repository. 
     kubernetesManifest:
-      bitbucketFqdn: https://bitbucket.trimble.tools/rest/api/1.0      
-      bitbucketProject: TCX-PRODUCT                         
-      bitbucketRepo: trimble.transportation.entitlements.navbar.permissions 
+      bitbucketFqdn: https://bitbucket.trimble.tools/rest/api/1.0
+      bitbucketProject: TCX-PRODUCT
+      bitbucketRepo: trimble.transportation.entitlements.navbar.permissions
       bitbucketSpinnakerAccount: bitbucket-tcx-ci
       manifestPath: spinnaker.yaml
       bitbucketBranch: main
@@ -55,7 +55,7 @@ spec:
     # This is the namespace the operator is running in. Will override namespace in the manifest. 
     namespace: ttc-spinnaker-operator
     # The role that can deploy to the cluster above 
-    pipelineRoles: 
+    pipelineRoles:
       - tcx-kuebix
       - slipway-admin
   artifacts:
@@ -152,13 +152,13 @@ spec:
         endHour: 17
       # Jobs that run before this environment deploys. Note: jobs will run in all clusters defined for this environment
       preJobs: []
-#      preJobs:
-#        - smokeTesting
+      #      preJobs:
+      #        - smokeTesting
       # Jobs that run after this environment deploys. Note: jobs will run in all clusters defined for this environment
       postJobs: []
-#      postJobs:
-#        - smokeTesting
-#        - performanceTesting
+      #      postJobs:
+      #        - smokeTesting
+      #        - performanceTesting
       # Define if an approval stage will be added before this environment can be deployed.
       requireApproval: false
       # A list of jenkins stages this environment depends on before it can run.
@@ -188,13 +188,13 @@ spec:
         endHour: 17
       # Jobs that run before this environment deploys. Note: jobs will run in all clusters defined for this environment
       preJobs: []
-#      preJobs:
-#        - smokeTesting
+      #      preJobs:
+      #        - smokeTesting
       # Jobs that run after this environment deploys. Note: jobs will run in all clusters defined for this environment
       postJobs: []
-#      postJobs:
-#        - smokeTesting
-#        - performanceTesting
+      #      postJobs:
+      #        - smokeTesting
+      #        - performanceTesting
       requiredJenkinsStages:
         - imageValidator
         - sonarValidator
@@ -221,17 +221,125 @@ spec:
         docsHosts: api-docs.trimble-transportation.com
       # Jobs that run before this environment deploys. Note: jobs will run in all clusters defined for this environment
       preJobs: []
-#      preJobs:
-#        - smokeTesting
+      #      preJobs:
+      #        - smokeTesting
       # Jobs that run after this environment deploys. Note: jobs will run in all clusters defined for this environment
       postJobs: []
-#      postJobs:
-#        - smokeTesting
-#        - performanceTesting
+      #      postJobs:
+      #        - smokeTesting
+      #        - performanceTesting
       requiredJenkinsStages:
         - imageValidator
         - sonarValidator
         - whitesourceValidator
       requireApproval: true
-      requiredEnvironments: 
+      requiredEnvironments:
         - staging
+    dev-v2:
+      # Define the clusters that belong to this environment. These clusters must exist in spinnaker.
+      clusters:
+        - ttc-dev-eastus2-user
+      # Any numbers must be quoted
+      parameters:
+        namespace: dev
+        minReplicas: "2"
+        maxReplicas: "3"
+        loglevel: info
+        keyvault: tcx-dev-7c1efc0feee8
+        keyvaultResourceGroup: tcx-kuebix
+        keyvaultSubscriptionId: c3858f8e-ebe6-4079-a815-8f4d7826f5de
+        keyvaultTenantId: 23235593-4c46-41c1-944b-32a03aab96e6
+        hosts: entitlementsnavbarpermissions.dev.trimble-transportation.com
+        apiGatewayHost: api.dev.v2.ttc.slipway.transportation.trimble.com
+        deploymentProgressDeadlineSeconds: "600"
+        docsHosts: api-docs.dev.trimble-transportation.com
+      # Restrict the time this environment can be deployed to.
+      restrictedExecutionTimeWindow:
+        enabled: false
+        startHour: 8
+        endHour: 17
+      # Jobs that run before this environment deploys. Note: jobs will run in all clusters defined for this environment
+      preJobs: []
+      #      preJobs:
+      #        - smokeTesting
+      # Jobs that run after this environment deploys. Note: jobs will run in all clusters defined for this environment
+      postJobs: []
+      #      postJobs:
+      #        - smokeTesting
+      #        - performanceTesting
+      # Define if an approval stage will be added before this environment can be deployed.
+      requireApproval: false
+      # A list of jenkins stages this environment depends on before it can run.
+      requiredJenkinsStages: []
+      # A list of environments that this environment depends on.
+      requiredEnvironments: []
+    staging-v2:
+      clusters:
+        - ttc-staging-eastus2-user
+        - ttc-staging-westus2-user
+      parameters:
+        namespace: staging
+        minReplicas: "2"
+        maxReplicas: "5"
+        loglevel: info
+        keyvault: tcx-staging-7c1efc0feee8
+        keyvaultResourceGroup: tcx-kuebix
+        keyvaultSubscriptionId: c3858f8e-ebe6-4079-a815-8f4d7826f5de
+        keyvaultTenantId: 23235593-4c46-41c1-944b-32a03aab96e6
+        hosts: entitlementsnavbarpermissions.stg.trimble-transportation.com
+        apiGatewayHost: api.stg.v2.ttc.slipway.transportation.trimble.com
+        deploymentProgressDeadlineSeconds: "600"
+        docsHosts: api-docs.stg.trimble-transportation.com
+      restrictedExecutionTimeWindow:
+        enabled: true
+        startHour: 8
+        endHour: 17
+      # Jobs that run before this environment deploys. Note: jobs will run in all clusters defined for this environment
+      preJobs: []
+      #      preJobs:
+      #        - smokeTesting
+      # Jobs that run after this environment deploys. Note: jobs will run in all clusters defined for this environment
+      postJobs: []
+      #      postJobs:
+      #        - smokeTesting
+      #        - performanceTesting
+      requiredJenkinsStages:
+        - imageValidator
+        - sonarValidator
+        - whitesourceValidator
+      requireApproval: true
+      requiredEnvironments:
+        - dev-v2
+    prod-v2:
+      clusters:
+        - ttc-prod-eastus2-user
+        - ttc-prod-westus2-user
+      parameters:
+        namespace: prod
+        minReplicas: "2"
+        maxReplicas: "5"
+        loglevel: info
+        keyvault: tcx-prod-7c1efc0feee8
+        keyvaultResourceGroup: tcx-kuebix
+        keyvaultSubscriptionId: 85cae6cd-7015-422a-ae14-d60a136b559b
+        keyvaultTenantId: 23235593-4c46-41c1-944b-32a03aab96e6
+        hosts: entitlementsnavbarpermissions.trimble-transportation.com
+        apiGatewayHost: api.v2.ttc.slipway.transportation.trimble.com
+        deploymentProgressDeadlineSeconds: "600"
+        docsHosts: api-docs.trimble-transportation.com
+      # Jobs that run before this environment deploys. Note: jobs will run in all clusters defined for this environment
+      preJobs: []
+      #      preJobs:
+      #        - smokeTesting
+      # Jobs that run after this environment deploys. Note: jobs will run in all clusters defined for this environment
+      postJobs: []
+      #      postJobs:
+      #        - smokeTesting
+      #        - performanceTesting
+      requiredJenkinsStages:
+        - imageValidator
+        - sonarValidator
+        - whitesourceValidator
+      requireApproval: true
+      requiredEnvironments:
+        - staging-v2
